@@ -2,6 +2,7 @@ from collections.abc import Iterable
 
 import numpy as np
 
+
 def make_iterable(x):
     if isinstance(x, Iterable):
         return x
