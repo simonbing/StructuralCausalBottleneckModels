@@ -87,7 +87,8 @@ class SCBMSampler(object):
             else:
                 d_bottleneck = self.d_bottleneck_matrix[parent_idxs, i]
 
-            m_fcts[i] = self.mechanism_sampler(d_bottleneck=d_bottleneck,
+            m_fcts[i] = self.mechanism_sampler(rs=self.rs,
+                                               d_bottleneck=d_bottleneck,
                                                d_micro=self.d_micro[i])
 
         return m_fcts

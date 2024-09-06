@@ -3,7 +3,7 @@ import numpy as np
 from cbm.utils import make_iterable
 
 
-def constant_scalar_mechanism(d_bottleneck, d_micro):
+def constant_scalar_mechanism(rs, d_bottleneck, d_micro):
     """
     Args:
         d_bottleneck: int or list[ints]
@@ -21,7 +21,8 @@ def constant_scalar_mechanism(d_bottleneck, d_micro):
     else:
         d_bottleneck = make_iterable(d_bottleneck)  # this should be all ones
         # Sample constant values. Just using 1 for now.
-        constants = np.ones_like(d_bottleneck)
+        # constants = np.ones_like(d_bottleneck)
+        constants = rs.choice((1, 2, 3, 4), size=len(d_bottleneck))
 
         def f(*args):
             intermed = []

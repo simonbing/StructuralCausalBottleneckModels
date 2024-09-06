@@ -29,7 +29,7 @@ def check_open_path(source, target):
 
 def main():
     sampler = SCBMSampler(seed=0,
-                          d_macro=4,
+                          d_macro=5,
                           d_micro=4,
                           d_bottleneck=1,
                           bottleneck_mode='convex_comb',
