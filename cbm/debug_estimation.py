@@ -29,7 +29,7 @@ def check_open_path(source, target):
 
 def main():
     sampler = SCBMSampler(seed=0,
-                          d_macro=5,
+                          d_macro=9,
                           d_micro=4,
                           d_bottleneck=1,
                           bottleneck_mode='convex_comb',
@@ -40,7 +40,10 @@ def main():
 
     obs_sample = test_scbm.sample(size=50000)
 
-    estimated_bottlenecks = estimate_bottleneck_fcts(test_scbm)
+    # mode = 'linear'
+    mode = 'reduced_rank'
+
+    estimated_bottlenecks = estimate_bottleneck_fcts(test_scbm, mode=mode)
 
     # Apply learned bottlenecks
     estimated_bottleneck_samples = np.empty_like(estimated_bottlenecks, dtype=object)

@@ -1,6 +1,6 @@
 import numpy as np
 
-from cbm.estimation.lin_regressors import LinRegressor
+from cbm.estimation.lin_regressors import LinRegressor, ReducedRankRegressor
 from cbm.estimation.utils import _get_var_idx, sort_parent_idxs
 
 
@@ -58,6 +58,8 @@ def estimate_bottleneck_fcts(SCBM, mode='linear'):
     # mode = 'linear'
     if mode == 'linear':
         reg_model = LinRegressor
+    elif mode == 'reduced_rank':
+        reg_model = ReducedRankRegressor
     else:
         pass
 
