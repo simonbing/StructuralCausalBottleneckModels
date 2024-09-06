@@ -9,7 +9,7 @@ def sample_from_simplex(rs, n):
 def sample_convex_comb_bottleneck(rs, d_micro, d_bottleneck):
     w = sample_from_simplex(rs, d_micro)
 
-    print(f'w:\n{w}')
+    # print(f'w:\n{w}')
 
     def f(x):
         return x @ w
