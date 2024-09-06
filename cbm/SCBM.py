@@ -10,6 +10,7 @@ import numpy as np
 
 from cbm import SCBMMechanism, make_iterable
 
+
 class MacroCausalVar(object):
     """
     Class for macro variables in bottleneck models.
@@ -23,12 +24,12 @@ class MacroCausalVar(object):
             variables
         mechanism: SCBMMechanism
             internal microstate mechanism of the variable
-        n: int
+        d: int
             number of internal microstate variables
-        value: np.array[sample_size, n]
+        value: np.array[sample_size, d_micro]
             sampled values
     """
-    def __init__(self, parents, bottleneck_fcts, mechanism, n):
+    def __init__(self, parents, bottleneck_fcts, mechanism, d):
         assert ((isinstance(parents, Iterable) and
                  all(isinstance(parent, MacroCausalVar) for parent in parents))
                 or parents is None), "Parents of a variable must be list of " \
@@ -45,7 +46,7 @@ class MacroCausalVar(object):
         assert isinstance(mechanism, SCBMMechanism), "Mechanism must be SCBMMechanism type!"
         self.mechanism = mechanism
 
-        self.n = n
+        self.d = d
 
         # Assigned during sampling
         self.value = None
@@ -96,7 +97,7 @@ class SCBM(object):
         intervention_flag: bool
             Indicates whether model has been intervened upon. For sampling.
     """
-    def __init__(self, variables, seed=None):
+    def __init__(self, variables, A, d_bottleneck_matrix, seed=None):
         # Random seed for reproducibility
         self.seed = seed
         self.rs = np.random.RandomState(seed=self.seed)
@@ -105,7 +106,14 @@ class SCBM(object):
         assert all(isinstance(var, MacroCausalVar) for var in self.variables), \
             "All SCBM variables must be MacroCausalVar objects!"
 
+        self.A = A  # adjacency matrix of macro graph
+
+        self.d_bottleneck_matrix = d_bottleneck_matrix  # bottleneck dimensions
+
         self.intervention_flag = False
+
+        self.bottleneck_samples = np.empty((len(self.variables), len(self.variables)),
+                                          dtype=object)
 
     def sample(self, size):
         """
@@ -130,13 +138,19 @@ class SCBM(object):
             # might have to adapt it later on
 
             # Sample from independent Gaussian
-            noise = self.rs.multivariate_normal(mean=np.zeros(var.n),
-                                                cov=np.eye(var.n), size=size)
+            noise = self.rs.multivariate_normal(mean=np.zeros(var.d),
+                                                cov=np.eye(var.d), size=size)
             if var.parents is not None:
                 # Get bottleneck values
                 bottleneck_values = [bottleneck_fct(parent.value) for
                                      parent, bottleneck_fct in
                                      zip(var.parents, var.bottleneck_fcts)]
+
+                counter = 0
+                for parent in var.parents:
+                    parent_idx = np.where(self.variables == parent)[0][0]
+                    self.bottleneck_samples[parent_idx, i] = bottleneck_values[counter]
+                    counter += 1
 
                 value = var.mechanism(noise, *bottleneck_values)
             else: # Leaf nodes

@@ -61,32 +61,3 @@ def get_cond_mean_cov(target, value, E):
     E_bar = E_11 - E_12 @ E_22_inv @ E_12.T
 
     return mu_bar, E_bar
-
-
-def sample_mrf_prec(dim, M, rs):
-    """
-    Args:
-        dim: int
-            number of dimensions
-        M: np.array
-            array that encodes the sparsity structure of the precision matrix
-            s.t. this is a valid MRF
-        seed: int
-            the random seed
-    Returns:
-        P: np.array
-            sampled precision matrix
-    """
-    def sample():
-        P = rs.random(size=(dim, dim)) # sample dense dim x dim matrix
-        P = P @ P.T # make this object symmetric
-        P += np.identity(dim) # make positive definite
-        P = np.where(M, P, 0) # apply sparsity map
-        return P
-
-    P = sample()
-    # Rejection sampling until P is pd
-    while any(np.linalg.eigvals(P) < 0):
-        P = sample()
-
-    return P
