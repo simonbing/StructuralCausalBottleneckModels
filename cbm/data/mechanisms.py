@@ -5,6 +5,8 @@ from cbm.utils import make_iterable
 
 def constant_scalar_mechanism(rs, d_bottleneck, d_micro):
     """
+    Sums bottleneck values and multiplies by a scalar.
+
     Args:
         d_bottleneck: int or list[ints]
             Value of bottleneck (i.e. input) dimensions of parent nodes
@@ -19,7 +21,7 @@ def constant_scalar_mechanism(rs, d_bottleneck, d_micro):
     if d_bottleneck is None:  # No parents
         return None
     else:
-        d_bottleneck = make_iterable(d_bottleneck)  # this should be all ones
+        d_bottleneck = make_iterable(d_bottleneck)
         # Sample constant values. Just using 1 for now.
         # constants = np.ones_like(d_bottleneck)
         constants = rs.choice((1, 2, 3, 4), size=len(d_bottleneck))
@@ -27,7 +29,32 @@ def constant_scalar_mechanism(rs, d_bottleneck, d_micro):
         def f(*args):
             intermed = []
             for i, arg in enumerate(args):
-                intermed.append(arg @ (constants[i] * np.ones((1, d_micro))))
+                intermed.append(arg @ (constants[i] * np.ones((d_bottleneck[i], d_micro))))
+
+            return np.sum(intermed, axis=0)
+
+        return f
+
+
+def linear_mechanism(rs, d_bottleneck, d_micro):
+    if d_bottleneck is None:  # No parents
+        return None
+    else:
+        d_bottleneck = make_iterable(d_bottleneck)
+
+        # Sample one matrix for each incoming bottleneck
+        w_list = []
+        for i in range(len(d_bottleneck)):
+            w = rs.uniform(size=(d_bottleneck[i], d_micro))
+            # Make sure rank is correct
+            while np.linalg.matrix_rank(w) < d_bottleneck[i]:
+                w = rs.uniform(size=(d_bottleneck[i], d_micro))
+            w_list.append(w)
+
+        def f(*args):
+            intermed = []
+            for i, arg in enumerate(args):
+                intermed.append(arg @ w_list[i])
 
             return np.sum(intermed, axis=0)
 

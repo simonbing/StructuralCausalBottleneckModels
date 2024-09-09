@@ -3,8 +3,8 @@ from collections.abc import Iterable
 import numpy as np
 
 from cbm.data.utils import rand_weight_matrix, rand_undirected_adj_matrix, sample_mrf_prec
-from cbm.data.bottlenecks import sample_convex_comb_bottleneck
-from cbm.data.mechanisms import constant_scalar_mechanism
+from cbm.data.bottlenecks import sample_convex_comb_bottleneck, sample_lin_bottleneck
+from cbm.data.mechanisms import constant_scalar_mechanism, linear_mechanism
 from cbm import SCBM, GaussianLangevinMechanism, MacroCausalVar
 
 
@@ -48,17 +48,17 @@ class SCBMSampler(object):
 
     def _get_bottleneck_sampler(self, mode):
         if mode == 'convex_comb':
-            # Make sure that all d_bottleneck are set to 1
-            n_edges = np.count_nonzero(self.A)
-            self.d_bottleneck_matrix = np.where(self.A == 1, 1, 0)
-
             return sample_convex_comb_bottleneck
+        elif mode == 'linear':
+            return sample_lin_bottleneck
         else:
             ValueError, f'bottleneck_mode {mode} not defined!'
 
     def _get_mechanism_sampler(self, mode):
         if mode == 'constant':
             return constant_scalar_mechanism
+        elif mode == 'linear':
+            return linear_mechanism
         else:
             ValueError, f'mech_mode {mode} not defined!'
 

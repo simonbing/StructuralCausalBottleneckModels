@@ -15,3 +15,19 @@ def sample_convex_comb_bottleneck(rs, d_micro, d_bottleneck):
         return x @ w
 
     return f
+
+
+def sample_lin_bottleneck(rs, d_micro, d_bottleneck):
+    """
+    Samples a (rank d_bottleneck) matrix as the bottleneck function.
+    """
+    w = rs.uniform(size=(d_micro, d_bottleneck))
+
+    # Make sure rank is correct
+    while np.linalg.matrix_rank(w) < d_bottleneck:
+        w = rs.uniform(size=(d_micro, d_bottleneck))
+
+    def f(x):
+        return x @ w
+
+    return f

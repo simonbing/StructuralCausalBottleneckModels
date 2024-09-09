@@ -29,19 +29,19 @@ def check_open_path(source, target):
 
 def main():
     sampler = SCBMSampler(seed=0,
-                          d_macro=9,
+                          d_macro=4,
                           d_micro=4,
-                          d_bottleneck=1,
-                          bottleneck_mode='convex_comb',
-                          mech_mode='constant',
+                          d_bottleneck=2,
+                          bottleneck_mode='linear',
+                          mech_mode='linear',
                           p=0.8)
 
     test_scbm = sampler.sample()
 
     obs_sample = test_scbm.sample(size=50000)
 
-    # mode = 'linear'
-    mode = 'reduced_rank'
+    mode = 'linear'
+    # mode = 'reduced_rank'
 
     estimated_bottlenecks = estimate_bottleneck_fcts(test_scbm, mode=mode)
 
