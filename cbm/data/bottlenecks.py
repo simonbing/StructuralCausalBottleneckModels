@@ -31,3 +31,19 @@ def sample_lin_bottleneck(rs, d_micro, d_bottleneck):
         return x @ w
 
     return f
+
+
+def manual_nonlinear(rs, d_micro, d_bottleneck):
+    """
+    Returns a hard-coded nonlinear, surjective function, mainly for debugging.
+    """
+    w = rs.uniform(size=(d_micro, d_bottleneck))
+    # Make sure rank is correct
+    while np.linalg.matrix_rank(w) < d_bottleneck:
+        w = rs.uniform(size=(d_micro, d_bottleneck))
+
+    def f(x):
+        y = x @ w
+        return y**3
+
+    return f

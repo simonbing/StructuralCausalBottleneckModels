@@ -59,3 +59,13 @@ def linear_mechanism(rs, d_bottleneck, d_micro):
             return np.sum(intermed, axis=0)
 
         return f
+
+
+def manual_nonlinear_mechanism(rs, d_bottleneck, d_micro):
+    f_lin = linear_mechanism(rs, d_bottleneck, d_micro)
+
+    def f(*args):
+        y = f_lin(*args)
+        return y**3
+
+    return f
