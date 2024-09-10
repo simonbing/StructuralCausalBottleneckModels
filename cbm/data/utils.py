@@ -64,16 +64,23 @@ def sample_mrf_prec(dim, M, rs):
         P: np.array
             sampled precision matrix
     """
-    def sample():
-        P = rs.random(size=(dim, dim)) # sample dense dim x dim matrix
-        P = P @ P.T # make this object symmetric
-        P += np.identity(dim) # make positive definite
-        P = np.where(M, P, 0) # apply sparsity map
-        return P
+    # Sum of outer products of vectors make psd matrix]
+    P_list = []
+    # Outer loop over rows
+    for i in range(dim):
+        # Inner loop over columns above diagonal
+        for j in range(i+1, dim):
+            if M[i, j] == 1:
+                # Create sparsity mask
+                m = np.zeros(dim)
+                m[i] = m[j] = 1
+                # Vector for outer product
+                p = np.asarray([rs.random() if elem == 1 else 0.0 for elem in m])
 
-    P = sample()
-    # Rejection sampling until P is pd
-    while any(np.linalg.eigvals(P) < 0):
-        P = sample()
+                P_list.append(np.outer(p, p))
+
+    P = np.sum(P_list, axis=0)
+    eps = 0.01
+    P += (eps * np.identity(dim))
 
     return P

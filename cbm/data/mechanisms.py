@@ -5,7 +5,8 @@ from cbm.utils import make_iterable
 
 def constant_scalar_mechanism(rs, d_bottleneck, d_micro):
     """
-    Sums bottleneck values and multiplies by a scalar.
+    Sums bottleneck values and multiplies by a scalar. Only use when
+    d_bottleneck == 1, otherwise there is a rank issue!
 
     Args:
         d_bottleneck: int or list[ints]
@@ -46,7 +47,6 @@ def linear_mechanism(rs, d_bottleneck, d_micro):
         w_list = []
         for i in range(len(d_bottleneck)):
             w = rs.uniform(size=(d_bottleneck[i], d_micro))
-            # Make sure rank is correct
             while np.linalg.matrix_rank(w) < d_bottleneck[i]:
                 w = rs.uniform(size=(d_bottleneck[i], d_micro))
             w_list.append(w)

@@ -28,7 +28,8 @@ class LinRegressor(BaseRegressor):
             linear_map = self.model.coef_[:self.d_bottleneck, :self.X_dim].T
         except AttributeError:  # go here if self.X_dim is not defined, i.e. no conditioning
             linear_map = self.model.coef_[:self.d_bottleneck, :].T
-        print(f'Linear map:\n{linear_map}')
+
+        # print(f'Linear map:\n{linear_map}')
         fct = lambda x: x @ linear_map
 
         return fct
@@ -58,7 +59,7 @@ class ReducedRankRegressor(LinRegressor):
             linear_map = red_components[:self.d_bottleneck, :self.X_dim].T
         except AttributeError:  # go here if self.X_dim is not defined, i.e. no conditioning
             linear_map = red_components[:self.d_bottleneck, :].T
-        print(f'Linear map:\n{linear_map}')
+        # print(f'Linear map:\n{linear_map}')
         fct = lambda x: x @ linear_map
 
         return fct

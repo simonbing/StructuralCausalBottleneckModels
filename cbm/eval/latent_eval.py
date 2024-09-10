@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.linear_model import LinearRegression
 
 
 def _compute_r2(z_gt, z_hat):
@@ -17,11 +18,21 @@ def linear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_samples):
 
     r2_matrix = np.empty_like(estimated_bottleneck_samples, dtype=object)
 
+    train_frac = 0.8
+    n_train = int(train_frac * len(estimated_bottleneck_samples))
+
     for i in range(d):
         for j in range(d):
             if estimated_bottleneck_samples[i, j] is not None:
                 # Get linear fit
+                regr = LinearRegression()
+                regr.fit(estimated_bottleneck_samples[i, j][:n_train, ...],
+                         gt_bottleneck_samples[i, j][:n_train, ...])
+                score = regr.score(estimated_bottleneck_samples[i, j][n_train:, ...],
+                                   gt_bottleneck_samples[i, j][n_train:, ...])
                 r2 = _compute_r2(gt_bottleneck_samples[i, j], estimated_bottleneck_samples[i, j])
-                r2_matrix[i, j] = r2
+                r2_matrix[i, j] = score
+                # pr = pearsonr(gt_bottleneck_samples[i, j], estimated_bottleneck_samples[i, j])
+                # a=0
 
     return r2_matrix

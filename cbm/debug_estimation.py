@@ -29,12 +29,12 @@ def check_open_path(source, target):
 
 def main():
     sampler = SCBMSampler(seed=0,
-                          d_macro=4,
-                          d_micro=4,
-                          d_bottleneck=2,
+                          d_macro=7,
+                          d_micro=30,
+                          d_bottleneck=5,
                           bottleneck_mode='linear',
                           mech_mode='linear',
-                          p=0.8)
+                          p=0.7)
 
     test_scbm = sampler.sample()
 
