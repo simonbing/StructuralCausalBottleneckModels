@@ -6,8 +6,8 @@ from cbm.estimation.base_regressor import BaseRegressor
 
 
 class LinRegressor(BaseRegressor):
-    def __init__(self, d_micro_in, d_micro_out, d_bottleneck):
-        super().__init__(d_micro_in, d_micro_out, d_bottleneck)
+    def __init__(self, seed, d_micro_in, d_micro_out, d_bottleneck, d_cond):
+        super().__init__(seed, d_micro_in, d_micro_out, d_bottleneck, d_cond)
 
         self.model = LinearRegression()
 

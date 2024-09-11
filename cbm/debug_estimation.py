@@ -40,8 +40,9 @@ def main():
 
     obs_sample = test_scbm.sample(size=50000)
 
-    mode = 'linear'
+    # mode = 'linear'
     # mode = 'reduced_rank'
+    mode = 'mlp'
 
     estimated_bottlenecks = estimate_bottleneck_fcts(test_scbm, mode=mode)
 

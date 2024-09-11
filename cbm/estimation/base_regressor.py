@@ -2,10 +2,12 @@ from abc import ABC, abstractmethod
 
 
 class BaseRegressor(ABC):
-    def __init__(self, d_micro_in, d_micro_out, d_bottleneck):
+    def __init__(self, seed, d_micro_in, d_micro_out, d_bottleneck, d_cond=0):
+        self.seed = seed
         self.d_micro_in = d_micro_in
         self.d_micro_out = d_micro_out
         self.d_bottleneck = d_bottleneck
+        self.d_cond = d_cond
 
     @abstractmethod
     def fit(self, X, Y, X_cond=[]):

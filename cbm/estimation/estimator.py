@@ -1,6 +1,7 @@
 import numpy as np
 
 from cbm.estimation.lin_regressors import LinRegressor, ReducedRankRegressor
+from cbm.estimation.mlp_regressor import MLPRegressor
 from cbm.estimation.utils import _get_var_idx, sort_parent_idxs
 
 
@@ -60,6 +61,8 @@ def estimate_bottleneck_fcts(SCBM, mode='linear'):
         reg_model = LinRegressor
     elif mode == 'reduced_rank':
         reg_model = ReducedRankRegressor
+    elif mode == 'mlp':
+        reg_model = MLPRegressor
     else:
         pass
 
@@ -84,9 +87,22 @@ def estimate_bottleneck_fcts(SCBM, mode='linear'):
                 d_cond = cond_set.shape[1] if len(cond_set) > 0 else 0
                 # print(f'd_cond: {d_cond}')
 
-                regressor = reg_model(d_micro_in=source.d + d_cond,
-                                      d_micro_out=target.d,
-                                      d_bottleneck=SCBM.d_bottleneck_matrix[source_idx, target_idx])
+                reg_args = {'seed': SCBM.seed,
+                            'd_micro_in': source.d,
+                            'd_micro_out': target.d,
+                            'd_bottleneck': SCBM.d_bottleneck_matrix[source_idx, target_idx],
+                            'd_cond': d_cond}
+                # TODO: figure out a way to pass these args when calling the estimation function
+                if mode == 'mlp':
+                    mlp_args = {'dense_x_z': [64, 64],
+                                'dense_z_x': [64, 64],
+                                'epochs': 1,
+                                'batch_size': 128,
+                                'learning_rate': 0.005,
+                                'momentum': 0.9}
+                    reg_args = reg_args | mlp_args
+
+                regressor = reg_model(**reg_args)
                 regressor.fit(X=source.value, Y=target.value, X_cond=cond_set)
                 bottleneck_fct = regressor.get_bottleneck_fct()
                 estimated_bottleneck_fcts[source_idx, target_idx] = bottleneck_fct
