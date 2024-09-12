@@ -22,21 +22,18 @@ def linear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_samples):
     r2_matrix = np.empty_like(estimated_bottleneck_samples, dtype=object)
 
     train_frac = 0.8
-    n_train = int(train_frac * len(estimated_bottleneck_samples))
 
     for i in range(d):
         for j in range(d):
             if estimated_bottleneck_samples[i, j] is not None:
+                n_train = int(train_frac * len(estimated_bottleneck_samples[i, j]))
                 # Get linear fit
                 regr = LinearRegression()
-                regr.fit(estimated_bottleneck_samples[i, j][:n_train, ...],
-                         gt_bottleneck_samples[i, j][:n_train, ...])
-                score = regr.score(estimated_bottleneck_samples[i, j][n_train:, ...],
-                                   gt_bottleneck_samples[i, j][n_train:, ...])
-                # r2 = _compute_r2(gt_bottleneck_samples[i, j], estimated_bottleneck_samples[i, j])
+                regr.fit(gt_bottleneck_samples[i, j][:n_train, ...],
+                         estimated_bottleneck_samples[i, j][:n_train, ...])
+                score = regr.score(gt_bottleneck_samples[i, j][n_train:, ...],
+                                   estimated_bottleneck_samples[i, j][n_train:, ...])
                 r2_matrix[i, j] = score
-                # pr = pearsonr(gt_bottleneck_samples[i, j], estimated_bottleneck_samples[i, j])
-                # a=0
 
     return r2_matrix
 
@@ -50,20 +47,23 @@ def nonlinear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_sample
     mse_matrix = np.empty_like(estimated_bottleneck_samples, dtype=object)
 
     train_frac = 0.8
-    n_train = int(train_frac * len(estimated_bottleneck_samples))
 
     for i in range(d):
         for j in range(d):
             if estimated_bottleneck_samples[i, j] is not None:
                 d_micro = estimated_bottleneck_samples[i, j].shape[1]
+                n_train = int(train_frac * len(estimated_bottleneck_samples[i, j]))
                 # Fit regressor
-                regr = MLPRegressor(seed=0, d=d_micro, dense_layers=[64, 64],
-                                    learning_rate=0.005, momentum=0.9,
-                                    epochs=1, batch_size=128)
-                regr.fit(estimated_bottleneck_samples[i, j][:n_train, ...],
-                         gt_bottleneck_samples[i, j][:n_train, ...])
-                score = regr.score(estimated_bottleneck_samples[i, j][n_train:, ...],
-                                   gt_bottleneck_samples[i, j][n_train:, ...])
+                # regr = MLPRegressor(seed=0, d=d_micro, dense_layers=[64, 64],
+                #                     learning_rate=0.005, momentum=0.9,
+                #                     epochs=1, batch_size=128)
+                # regr.fit(estimated_bottleneck_samples[i, j][:n_train, ...],
+                #          gt_bottleneck_samples[i, j][:n_train, ...])
+                # score = regr.score(estimated_bottleneck_samples[i, j][n_train:, ...],
+                #                    gt_bottleneck_samples[i, j][n_train:, ...])
+                # Sanity check 1: random sample and compute score
+                rand_sample = np.zeros_like(estimated_bottleneck_samples[i, j][n_train:, ...])
+                score = ((rand_sample - gt_bottleneck_samples[i, j][n_train:, ...]) ** 2).mean()
                 mse_matrix[i, j] = score
 
     return mse_matrix
