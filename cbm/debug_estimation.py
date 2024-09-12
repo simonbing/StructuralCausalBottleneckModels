@@ -2,7 +2,7 @@ import numpy as np
 
 from cbm.data import SCBMSampler
 from cbm.estimation import estimate_bottleneck_fcts
-from cbm.eval import linear_bottleneck_eval
+from cbm.eval import linear_bottleneck_eval, nonlinear_bottleneck_eval
 
 
 def check_open_path(source, target):
@@ -54,7 +54,8 @@ def main():
                 estimated_bottleneck_samples[i, j] = estimated_bottlenecks[i, j](test_scbm.variables[i].value)
 
     # Evaluation
-    eval_mat = linear_bottleneck_eval(estimated_bottleneck_samples, test_scbm.bottleneck_samples)
+    # eval_mat = linear_bottleneck_eval(estimated_bottleneck_samples, test_scbm.bottleneck_samples)
+    eval_mat = nonlinear_bottleneck_eval(estimated_bottleneck_samples, test_scbm.bottleneck_samples)
     mean_score = np.mean(eval_mat[eval_mat != np.array(None)])
 
     a = 0

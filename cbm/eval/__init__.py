@@ -1,1 +1,1 @@
-from cbm.eval.latent_eval import linear_bottleneck_eval
+from cbm.eval.latent_eval import linear_bottleneck_eval, nonlinear_bottleneck_eval
