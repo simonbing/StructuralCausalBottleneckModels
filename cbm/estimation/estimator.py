@@ -1,7 +1,7 @@
 import numpy as np
 
 from cbm.estimation.lin_regressors import LinRegressor, ReducedRankRegressor
-from cbm.estimation.mlp_regressor import MLPRegressor
+from cbm.estimation.ae_regressor import AutoencoderRegressor
 from cbm.estimation.utils import _get_var_idx, sort_parent_idxs
 
 
@@ -62,7 +62,7 @@ def estimate_bottleneck_fcts(SCBM, mode='linear'):
     elif mode == 'reduced_rank':
         reg_model = ReducedRankRegressor
     elif mode == 'mlp':
-        reg_model = MLPRegressor
+        reg_model = AutoencoderRegressor
     else:
         pass
 

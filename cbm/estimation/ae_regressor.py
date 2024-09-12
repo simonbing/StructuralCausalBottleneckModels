@@ -12,7 +12,7 @@ from cbm.estimation.jax_models import Autoencoder
 from cbm.estimation.jax_utils import CBMDataset, numpy_collate
 
 
-class MLPRegressor(BaseRegressor):
+class AutoencoderRegressor(BaseRegressor):
     def __init__(self, seed, d_micro_in, d_micro_out, d_bottleneck, d_cond,
                  dense_x_z, dense_z_x, epochs, batch_size, learning_rate, momentum):
         super().__init__(seed, d_micro_in, d_micro_out, d_bottleneck, d_cond)
@@ -89,14 +89,14 @@ class MLPRegressor(BaseRegressor):
     @staticmethod
     @nnx.jit
     def train_step(model, optimizer, source_batch, target_batch):
-        grad_fn = nnx.value_and_grad(MLPRegressor.loss_fn, has_aux=False)
+        grad_fn = nnx.value_and_grad(AutoencoderRegressor.loss_fn, has_aux=False)
         loss, grads = grad_fn(model, source_batch, target_batch)
         optimizer.update(grads)
 
     @staticmethod
     @nnx.jit
     def eval_step(model, source_batch, target_batch):
-        loss_fn = MLPRegressor.loss_fn
+        loss_fn = AutoencoderRegressor.loss_fn
         loss = loss_fn(model, source_batch, target_batch)
         return loss
 
