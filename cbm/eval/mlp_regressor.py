@@ -5,13 +5,14 @@ from flax import nnx
 import optax
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
+import wandb
 
 from cbm.estimation.jax_utils import CBMDataset, numpy_collate
 
 
 class MLPRegressor(object):
     def __init__(self, seed, d, dense_layers, learning_rate, momentum, epochs,
-                 batch_size):
+                 batch_size, source, target):
         self.seed = seed
         self.d = d
         self.dense_layers = dense_layers
@@ -23,6 +24,8 @@ class MLPRegressor(object):
 
         self.optimizer = nnx.Optimizer(self.model, optax.adamw(learning_rate,
                                                                momentum))
+        self.source = source
+        self.target = target
 
     def _build_model(self):
         return MLP(d=self.d, dense_layers=self.dense_layers,
@@ -31,7 +34,7 @@ class MLPRegressor(object):
     @staticmethod
     def loss_fn(model, X_batch, Y_batch):
         Y_hat_batch = model(X_batch)
-        loss = ((Y_hat_batch - Y_batch) ** 2).mean()
+        loss = jnp.sum((Y_hat_batch - Y_batch) ** 2, axis=1).mean()
         return loss
 
     @staticmethod
@@ -40,6 +43,7 @@ class MLPRegressor(object):
         grad_fn = nnx.value_and_grad(MLPRegressor.loss_fn, has_aux=False)
         loss, grads = grad_fn(model, X_batch, Y_batch)
         optimizer.update(grads)
+        return loss
 
     @staticmethod
     @nnx.jit
@@ -67,15 +71,18 @@ class MLPRegressor(object):
         best_eval_loss = jnp.inf
         for epoch in range(self.epochs):
             for X_batch, Y_batch in train_dataloader:
-                self.train_step(self.model, self.optimizer, X_batch, Y_batch)
+                loss = self.train_step(self.model, self.optimizer, X_batch, Y_batch)
+                wandb.log({f'train loss ({self.source}, {self.target})': loss})
             # Eval
-            eval_loss = 0
+            epoch_eval_loss = 0
             for X_batch, Y_batch in val_dataloader:
-                eval_loss += self.eval_step(self.model, X_batch, Y_batch)
-            eval_loss = eval_loss / len(val_dataloader)
-            if eval_loss < best_eval_loss:
+                eval_loss = self.eval_step(self.model, X_batch, Y_batch)
+                epoch_eval_loss += eval_loss
+                wandb.log({f'eval loss ({self.source}, {self.target})': eval_loss})
+            epoch_eval_loss = epoch_eval_loss / len(val_dataloader)
+            if epoch_eval_loss < best_eval_loss:
                 best_model = copy.deepcopy(self.model)
-                best_eval_loss = eval_loss
+                best_eval_loss = epoch_eval_loss
 
         self.best_model = best_model
 

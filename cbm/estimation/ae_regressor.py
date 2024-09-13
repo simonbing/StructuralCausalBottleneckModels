@@ -82,8 +82,7 @@ class AutoencoderRegressor(BaseRegressor):
     @staticmethod
     def loss_fn(model, source_batch, target_batch):
         out_batch = model(*source_batch)
-        # TODO: check if we need to sum this!
-        loss = ((out_batch - target_batch) ** 2).mean()
+        loss = jnp.sum((out_batch - target_batch) ** 2, axis=1).mean()
         return loss
 
     @staticmethod
