@@ -2,6 +2,7 @@ import copy
 
 import numpy as np
 from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler
 
 from cbm.eval.mlp_regressor import MLPRegressor
 
@@ -56,9 +57,9 @@ def nonlinear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_sample
                 d_micro = estimated_bottleneck_samples[i, j].shape[1]
                 n_train = int(train_frac * len(estimated_bottleneck_samples[i, j]))
                 # Fit regressor
-                regr = MLPRegressor(seed=0, d=d_micro, dense_layers=[64, 64],
-                                    learning_rate=0.005, momentum=0.9,
-                                    epochs=1, batch_size=128,
+                regr = MLPRegressor(seed=0, d=d_micro, dense_layers=[128, 128, 128],
+                                    learning_rate=0.0005, momentum=0.9,
+                                    epochs=100, batch_size=128,
                                     source=i, target=j)
                 # regr.fit(estimated_bottleneck_samples[i, j][:n_train, ...],
                 #          gt_bottleneck_samples[i, j][:n_train, ...])
@@ -66,13 +67,22 @@ def nonlinear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_sample
                 #                    gt_bottleneck_samples[i, j][n_train:, ...])
                 # Sanity check 3: apply known bijection
                 lin_map = np.asarray([[1, 1], [1, -1]])
-                tf_sample = (gt_bottleneck_samples[i, j] @ lin_map)
+                tf_sample = 0.1 * (gt_bottleneck_samples[i, j] @ lin_map) ** 3
+                # rescale data
+                scaler = StandardScaler()
+                tf_scale = scaler.fit_transform(tf_sample)
+                gt_scale = scaler.fit_transform(gt_bottleneck_samples[i, j])
                 # tf_sample = copy.deepcopy(gt_bottleneck_samples[i, j])
-                regr.fit(tf_sample[:n_train, ...],
-                         gt_bottleneck_samples[i, j][:n_train, ...])
+                # regr.fit(tf_sample[:n_train, ...],
+                #          gt_bottleneck_samples[i, j][:n_train, ...])
+                # score = regr.score(
+                #     tf_sample[n_train:, ...],
+                #     gt_bottleneck_samples[i, j][n_train:, ...])
+                regr.fit(tf_scale[:n_train, ...],
+                         gt_scale[:n_train, ...])
                 score = regr.score(
-                    tf_sample[n_train:, ...],
-                    gt_bottleneck_samples[i, j][n_train:, ...])
+                    tf_scale[n_train:, ...],
+                    gt_scale[n_train:, ...])
                 # Sanity check 2: random sample as input to regr
                 # rand_sample = np.random.rand(*estimated_bottleneck_samples[i, j].shape)
                 # rand_sample = np.zeros_like(estimated_bottleneck_samples[i, j])

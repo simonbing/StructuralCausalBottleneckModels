@@ -41,7 +41,7 @@ def main():
     ESTIMATION_MODE = 'mlp'
 
     # wandb stuff
-    logging = True
+    logging = False
 
     wandb_config = dict(
         seed=SEED,
