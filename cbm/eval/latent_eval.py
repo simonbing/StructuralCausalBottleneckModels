@@ -57,19 +57,20 @@ def nonlinear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_sample
                 d_micro = estimated_bottleneck_samples[i, j].shape[1]
                 n_train = int(train_frac * len(estimated_bottleneck_samples[i, j]))
                 # Fit regressor
-                regr = MLPRegressor(seed=0, d=d_micro, dense_layers=[128, 128, 128],
-                                    learning_rate=0.0005, momentum=0.9,
-                                    epochs=100, batch_size=128,
+                regr = MLPRegressor(seed=0, d=d_micro, dense_layers=[128, 128, 128, 128, 128, 128],
+                                    learning_rate=0.005, momentum=0.9,
+                                    epochs=100, batch_size=5000,
                                     source=i, target=j)
                 # regr.fit(estimated_bottleneck_samples[i, j][:n_train, ...],
                 #          gt_bottleneck_samples[i, j][:n_train, ...])
                 # score = regr.score(estimated_bottleneck_samples[i, j][n_train:, ...],
                 #                    gt_bottleneck_samples[i, j][n_train:, ...])
                 # Sanity check 3: apply known bijection
-                lin_map = np.asarray([[1, 1], [1, -1]])
-                tf_sample = 0.1 * (gt_bottleneck_samples[i, j] @ lin_map) ** 3
+                # lin_map = np.asarray([[1, 1], [1, -1]])
+                # tf_sample = 0.1 * (gt_bottleneck_samples[i, j] @ lin_map) ** 3
                 # rescale data
                 scaler = StandardScaler()
+                tf_sample = estimated_bottleneck_samples[i, j]
                 tf_scale = scaler.fit_transform(tf_sample)
                 gt_scale = scaler.fit_transform(gt_bottleneck_samples[i, j])
                 # tf_sample = copy.deepcopy(gt_bottleneck_samples[i, j])

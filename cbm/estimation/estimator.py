@@ -91,14 +91,16 @@ def estimate_bottleneck_fcts(SCBM, mode='linear'):
                             'd_micro_in': source.d,
                             'd_micro_out': target.d,
                             'd_bottleneck': SCBM.d_bottleneck_matrix[source_idx, target_idx],
+                            'source': source_idx,
+                            'target': target_idx,
                             'd_cond': d_cond}
                 # TODO: figure out a way to pass these args when calling the estimation function
                 if mode == 'mlp':
-                    mlp_args = {'dense_x_z': [64, 64],
-                                'dense_z_x': [64, 64],
-                                'epochs': 1,
-                                'batch_size': 128,
-                                'learning_rate': 0.005,
+                    mlp_args = {'dense_x_z': [128, 128, 128],
+                                'dense_z_x': [128, 128, 128],
+                                'epochs': 10,
+                                'batch_size': 5000,
+                                'learning_rate': 0.0005,
                                 'momentum': 0.9}
                     reg_args = reg_args | mlp_args
 

@@ -6,6 +6,11 @@ from flax import nnx
 import optax
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
+import wandb
+
+### DEBUG
+from cbm.eval.mlp_regressor import MLP
+#########
 
 from cbm.estimation.base_regressor import BaseRegressor
 from cbm.estimation.jax_models import Autoencoder
@@ -13,14 +18,19 @@ from cbm.estimation.jax_utils import CBMDataset, numpy_collate
 
 
 class AutoencoderRegressor(BaseRegressor):
-    def __init__(self, seed, d_micro_in, d_micro_out, d_bottleneck, d_cond,
-                 dense_x_z, dense_z_x, epochs, batch_size, learning_rate, momentum):
-        super().__init__(seed, d_micro_in, d_micro_out, d_bottleneck, d_cond)
+    def __init__(self, seed, d_micro_in, d_micro_out, d_bottleneck, source,
+                 target, d_cond, dense_x_z, dense_z_x, epochs, batch_size,
+                 learning_rate, momentum):
+        super().__init__(seed, d_micro_in, d_micro_out, d_bottleneck, source,
+                         target, d_cond)
 
         self.model = Autoencoder(in_dim=self.d_micro_in, dense_x_z=dense_x_z,
                                  dense_z_x=dense_z_x, z_dim=self.d_bottleneck,
                                  cond_dim=self.d_cond, out_dim=self.d_micro_out,
                                  rngs=nnx.Rngs(params=self.seed))
+
+        # self.model = MLP(d=self.d_micro_in, dense_layers=[128, 128, 128, 128],
+        #                  rngs=nnx.Rngs(params=self.seed))
 
         self.epochs = epochs
         self.batch_size = batch_size
@@ -59,19 +69,28 @@ class AutoencoderRegressor(BaseRegressor):
 
         # Train
         best_eval_loss = jnp.inf
+        log_step_train = 0
+        log_step_eval = 0
         for epoch in range(self.epochs):
             for batch in train_dataloader:
                 source_batch = batch[:-1]  # also includes X_cond if it's there
                 target_batch = batch[-1]
-                self.train_step(self.model, self.optimizer, source_batch, target_batch)
+                loss = self.train_step(self.model, self.optimizer, source_batch, target_batch)
+                wandb.log({f'train loss ({self.source}, {self.target}), estim': loss,
+                           f'step_train ({self.source}, {self.target}), estim': log_step_train})
+                log_step_train += 1
             # Eval
-            eval_loss = 0
+            epoch_eval_loss = 0
             for batch in val_dataloader:
                 source_batch = batch[:-1]  # also includes X_cond if it's there
                 target_batch = batch[-1]
-                eval_loss += self.eval_step(self.model, source_batch, target_batch)
-            eval_loss = eval_loss / len(val_dataloader)
-            if eval_loss < best_eval_loss:
+                eval_loss = self.eval_step(self.model, source_batch, target_batch)
+                epoch_eval_loss += eval_loss
+                wandb.log({f'eval loss ({self.source}, {self.target}), estim': eval_loss,
+                           f'step_eval ({self.source}, {self.target}), estim': log_step_eval})
+                log_step_eval += 1
+            epoch_eval_loss = epoch_eval_loss / len(val_dataloader)
+            if epoch_eval_loss < best_eval_loss:
                 best_model = copy.deepcopy(self.model)
                 best_eval_loss = eval_loss
 
@@ -91,6 +110,7 @@ class AutoencoderRegressor(BaseRegressor):
         grad_fn = nnx.value_and_grad(AutoencoderRegressor.loss_fn, has_aux=False)
         loss, grads = grad_fn(model, source_batch, target_batch)
         optimizer.update(grads)
+        return loss
 
     @staticmethod
     @nnx.jit
