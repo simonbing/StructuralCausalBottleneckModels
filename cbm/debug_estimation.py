@@ -91,7 +91,7 @@ def main():
     if ESTIMATION_MODE == 'mlp':
         eval_mat = nonlinear_bottleneck_eval(estimated_bottleneck_samples,
                                              test_scbm.bottleneck_samples)
-    else:
+    elif ESTIMATION_MODE in ('linear', 'reduced_rank'):
         eval_mat = linear_bottleneck_eval(estimated_bottleneck_samples,
                                           test_scbm.bottleneck_samples)
     mean_score = np.mean(eval_mat[eval_mat != np.array(None)])
