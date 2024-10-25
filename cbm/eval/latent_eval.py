@@ -43,6 +43,15 @@ def linear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_samples):
                 score_back = regr_back.score(gt_bottleneck_samples[i, j][n_train:, ...],
                                              estimated_bottleneck_samples[i, j][n_train:, ...])
 
+                # DEBUG
+                pred_forward = regr_forward.predict(estimated_bottleneck_samples[i, j][n_train:, ...])
+                mse_forward = np.mean((pred_forward - gt_bottleneck_samples[i, j][n_train:, ...]) ** 2)
+
+                pred_back = regr_back.predict(gt_bottleneck_samples[i, j][n_train:, ...])
+                mse_back = np.mean((pred_back - estimated_bottleneck_samples[i, j][n_train:, ...]) ** 2)
+
+                # r2_matrix[i, j] = (mse_forward + mse_back) / 2
+
                 r2_matrix[i, j] = (score_forward + score_back) / 2
 
     return r2_matrix
@@ -64,6 +73,33 @@ def nonlinear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_sample
                 d_micro = estimated_bottleneck_samples[i, j].shape[1]
                 n_train = int(train_frac * len(estimated_bottleneck_samples[i, j]))
 
+                # Sanity check 1: random sample and compute score
+                # rand_sample = np.random.rand(*estimated_bottleneck_samples[i, j][n_train:, ...].shape)
+                # score = np.sum((rand_sample - gt_bottleneck_samples[i, j][n_train:, ...]) ** 2, axis=1).mean()
+
+                # Sanity check 2: random sample as input to regr
+                # rand_sample = np.random.rand(*estimated_bottleneck_samples[i, j].shape)
+                # rand_sample = np.zeros_like(estimated_bottleneck_samples[i, j])
+                # source_forward = rand_sample
+                # target_forward = gt_bottleneck_samples[i, j]
+                #
+                # source_back = gt_bottleneck_samples[i, j]
+                # target_back = rand_sample
+
+                # Sanity check 3: apply known bijection
+                # lin_map = np.asarray([[1, 1], [1, -1]])
+                # tf_sample = 0.1 * (gt_bottleneck_samples[i, j] @ lin_map) ** 3
+
+                # Sanity check 4: apply injective transformation
+                # lin_map = np.asarray([[1, 1], [1, -1]])
+                # tf_sample = 0.1 * (gt_bottleneck_samples[i, j] @ lin_map) ** 2
+                #
+                # source_forward = tf_sample
+                # target_forward = gt_bottleneck_samples[i, j]
+                #
+                # source_back = gt_bottleneck_samples[i, j]
+                # target_back = tf_sample
+
                 # Fit regressor (in both directions!)
                 # Forward direction
                 regr_forward = MLPRegressor(seed=0,
@@ -78,22 +114,6 @@ def nonlinear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_sample
 
                 source_forward = estimated_bottleneck_samples[i, j]
                 target_forward = gt_bottleneck_samples[i, j]
-
-                # Sanity check 1: random sample and compute score
-                # rand_sample = np.random.rand(*estimated_bottleneck_samples[i, j][n_train:, ...].shape)
-                # score = np.sum((rand_sample - gt_bottleneck_samples[i, j][n_train:, ...]) ** 2, axis=1).mean()
-
-                # Sanity check 2: random sample as input to regr
-                # rand_sample = np.random.rand(*estimated_bottleneck_samples[i, j].shape)
-                # rand_sample = np.zeros_like(estimated_bottleneck_samples[i, j])
-                # regr.fit(rand_sample[:n_train, ...],
-                #          gt_bottleneck_samples[i, j][:n_train, ...])
-                # score = regr.score(rand_sample[n_train:, ...],
-                #                    gt_bottleneck_samples[i, j][n_train:, ...])
-
-                # Sanity check 3: apply known bijection
-                # lin_map = np.asarray([[1, 1], [1, -1]])
-                # tf_sample = 0.1 * (gt_bottleneck_samples[i, j] @ lin_map) ** 3
 
                 # Rescale data
                 scaler_forward = StandardScaler()

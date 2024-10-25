@@ -7,6 +7,7 @@ import inspect
 import logging
 
 import numpy as np
+from sklearn.preprocessing import StandardScaler
 
 from cbm import SCBMMechanism, make_iterable
 
@@ -140,6 +141,9 @@ class SCBM(object):
             # Sample from independent Gaussian
             noise = self.rs.multivariate_normal(mean=np.zeros(var.d),
                                                 cov=np.eye(var.d), size=size)
+            ### DEBUG
+            noise = 0.1 * noise
+            ###
             if var.parents is not None:
                 # Get bottleneck values
                 bottleneck_values = [bottleneck_fct(parent.value) for
@@ -159,6 +163,10 @@ class SCBM(object):
             var.value = value
 
             values.append(value)
+
+        # EXPERIMENTAL
+        scaler = StandardScaler()
+        values = [scaler.fit_transform(val) for val in values]
 
         return values
 
