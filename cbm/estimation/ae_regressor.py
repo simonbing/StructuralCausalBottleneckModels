@@ -5,6 +5,7 @@ import jax.numpy as jnp
 from flax import nnx
 import optax
 from sklearn.model_selection import train_test_split
+import torch
 from torch.utils.data import DataLoader
 import wandb
 
@@ -23,6 +24,7 @@ class AutoencoderRegressor(BaseRegressor):
                  learning_rate, momentum):
         super().__init__(seed, d_micro_in, d_micro_out, d_bottleneck, source,
                          target, d_cond)
+        torch.manual_seed(self.seed)
 
         self.model = Autoencoder(in_dim=self.d_micro_in, dense_x_z=dense_x_z,
                                  dense_z_x=dense_z_x, z_dim=self.d_bottleneck,

@@ -4,6 +4,7 @@ import jax.numpy as jnp
 from flax import nnx
 import optax
 from sklearn.model_selection import train_test_split
+import torch
 from torch.utils.data import DataLoader
 import wandb
 
@@ -14,6 +15,7 @@ class MLPRegressor(object):
     def __init__(self, seed, d, dense_layers, learning_rate, momentum, epochs,
                  batch_size, source, target):
         self.seed = seed
+        torch.manual_seed(self.seed)
         self.d = d
         self.dense_layers = dense_layers
         # Build model

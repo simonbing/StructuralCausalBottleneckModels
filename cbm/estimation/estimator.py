@@ -142,6 +142,18 @@ def estimate_bottleneck_fcts(SCBM, mode='linear'):
                                             batch_size=5000,
                                             source=0,
                                             target=1)
+
+                regr_back = MLPRegressor(seed=0,
+                                         d=2,
+                                         dense_layers=[128, 128, 128, 128,
+                                                       128, 128],
+                                         learning_rate=0.0005,
+                                         momentum=0.9,
+                                         epochs=100,
+                                         batch_size=5000,
+                                         source=0,
+                                         target=1)
+
                 n_train = int(0.8 * len(Z_hat))
 
                 # Z_hat = Z ** 3
@@ -163,13 +175,16 @@ def estimate_bottleneck_fcts(SCBM, mode='linear'):
 
                     return colors
 
-                colors = get_rgb_color(Z[:, 0], Z[:, 1])
-
-                plt.scatter(Z[:, 0], Z[:, 1], c=colors)
-                plt.show()
+                # colors = get_rgb_color(Z[:, 0], Z[:, 1])
+                #
+                # plt.scatter(Z[:, 0], Z[:, 1], c=colors)
+                # plt.show()
 
                 regr_forward.fit(Z_hat[:n_train, ...], Z[:n_train, ...])
-                score = regr_forward.score(Z_hat[n_train:, ...], Z[n_train:, ...])
+                score_forward = regr_forward.score(Z_hat[n_train:, ...], Z[n_train:, ...])
+
+                regr_back.fit(Z[:n_train, ...], Z_hat[:n_train, ...])
+                score_back = regr_back.score(Z[n_train:, ...], Z_hat[n_train:, ...])
                 a=0
                 #########
 
