@@ -44,7 +44,7 @@ def manual_nonlinear(rs, d_micro, d_bottleneck):
 
     def f(x):
         y = x @ w
-        y = y / 10
+        # y = y / 10
         return y**3
 
     return f

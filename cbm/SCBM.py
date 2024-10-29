@@ -142,7 +142,7 @@ class SCBM(object):
             noise = self.rs.multivariate_normal(mean=np.zeros(var.d),
                                                 cov=np.eye(var.d), size=size)
             ### DEBUG
-            noise = 0.1 * noise
+            noise = 0000.1 * noise
             ###
             if var.parents is not None:
                 # Get bottleneck values
@@ -165,8 +165,8 @@ class SCBM(object):
             values.append(value)
 
         # EXPERIMENTAL
-        scaler = StandardScaler()
-        values = [scaler.fit_transform(val) for val in values]
+        # scaler = StandardScaler()
+        # values = [scaler.fit_transform(val) for val in values]
 
         return values
 

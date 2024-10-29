@@ -66,7 +66,7 @@ def manual_nonlinear_mechanism(rs, d_bottleneck, d_micro):
 
     def f(*args):
         y = f_lin(*args)
-        y = y / 1000
+        # y = y / 1000
         return y**3
 
     return f

@@ -94,7 +94,6 @@ def estimate_bottleneck_fcts(SCBM, mode='linear'):
                             'source': source_idx,
                             'target': target_idx,
                             'd_cond': d_cond}
-                # TODO: figure out a way to pass these args when calling the estimation function
                 if mode == 'mlp':
                     mlp_args = {'dense_x_z': [128, 128, 128],
                                 'dense_z_x': [128, 128, 128],
@@ -108,17 +107,37 @@ def estimate_bottleneck_fcts(SCBM, mode='linear'):
 
                 ### DEBUG
                 rs = np.random.RandomState(0)
-                X_i = rs.normal(size=source.value.shape)
+                # Reproduce mechanism
+                from cbm.data.utils import rand_undirected_adj_matrix, \
+                    sample_mrf_prec
+
+                M = rand_undirected_adj_matrix(rs=rs, nodes=4)
+                P = sample_mrf_prec(dim=4, M=M, rs=rs)
+                E = np.linalg.inv(P)
+                L = np.linalg.cholesky(E)
+                mu_i = rs.normal(size=source.value.shape)
+                X_i = (L @ mu_i.T).T
+
+                # X_i = rs.normal(size=source.value.shape)
                 W_i = rs.uniform(size=(4, 2))
                 Z = (1 * (X_i @ W_i)) ** 3
                 W_j = rs.uniform(size=(2, 4))
                 X_j = (1 * (Z @ W_j)) ** 3
+
+                M_j = rand_undirected_adj_matrix(rs=rs, nodes=4)
+                P_j = sample_mrf_prec(dim=4, M=M_j, rs=rs)
+                E_j = np.linalg.inv(P_j)
+                L_j = np.linalg.cholesky(E_j)
+                mu_j = rs.normal(size=source.value.shape)
+                noise_j = (L_j @ mu_j.T).T
+                X_j = X_j + noise_j
 
                 from sklearn.preprocessing import StandardScaler
                 scaler = StandardScaler()
 
                 X_i = scaler.fit_transform(X_i)
                 X_j = scaler.fit_transform(X_j)
+                # X_j = X_j + rs.normal(size=X_j.shape)
 
                 regressor.fit(X=X_i, Y=X_j, X_cond=cond_set)
                 #########
