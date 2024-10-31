@@ -1,6 +1,39 @@
 import numpy as np
 
 
+def leaky_relu(x):
+    if x < 0:
+        return 0.1 * x
+    else:
+        return x
+
+
+def sample_mlp(rs, in_dim, out_dim, hidden_dim, hidden_layers,
+               nonlinearity='leaky_relu'):
+    if nonlinearity == 'leaky_relu':
+        nonlin_f = np.vectorize(leaky_relu)
+    else:
+        raise ValueError
+
+    w_list = []
+    for i in range(hidden_layers):
+        if i == 0:
+            w = rs.uniform(size=(in_dim, hidden_dim))
+        else:
+            w = rs.uniform(size=(hidden_dim, hidden_dim))
+        w_list.append(w)
+
+    w_out = rs.uniform(size=(hidden_dim, out_dim))
+
+    def f(x):
+        for i in range(hidden_layers):
+            x = x @ w_list[i]
+            x = nonlin_f(x)
+        return x @ w_out
+
+    return f
+
+
 def rand_weight_matrix(seed, nodes=3, connect_prob=0.5, wmin=0.1, wmax=1.0):
     """
     :param nodes: number of nodes
@@ -64,7 +97,7 @@ def sample_mrf_prec(dim, M, rs):
         P: np.array
             sampled precision matrix
     """
-    # Sum of outer products of vectors make psd matrix]
+    # Sum of outer products of vectors make psd matrix
     P_list = []
     # Outer loop over rows
     for i in range(dim):

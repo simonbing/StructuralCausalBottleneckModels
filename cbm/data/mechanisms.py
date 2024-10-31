@@ -1,6 +1,7 @@
 import numpy as np
 
 from cbm.utils import make_iterable
+from cbm.data.utils import sample_mlp
 
 
 def constant_scalar_mechanism(rs, d_bottleneck, d_micro):
@@ -62,11 +63,55 @@ def linear_mechanism(rs, d_bottleneck, d_micro):
 
 
 def manual_nonlinear_mechanism(rs, d_bottleneck, d_micro):
-    f_lin = linear_mechanism(rs, d_bottleneck, d_micro)
+    # f_lin = linear_mechanism(rs, d_bottleneck, d_micro)
+    #
+    # def f(*args):
+    #     y = f_lin(*args)
+    #     # y = y / 1000
+    #     return y**3
+    # return f
 
-    def f(*args):
-        y = f_lin(*args)
-        # y = y / 1000
-        return y**3
+    if d_bottleneck is None:  # No parents
+        return None
+    else:
+        d_bottleneck = make_iterable(d_bottleneck)
 
-    return f
+        # Sample one matrix for each incoming bottleneck
+        w_list = []
+        for i in range(len(d_bottleneck)):
+            w = rs.uniform(size=(d_bottleneck[i], d_micro))
+            while np.linalg.matrix_rank(w) < d_bottleneck[i]:
+                w = rs.uniform(size=(d_bottleneck[i], d_micro))
+            w_list.append(w)
+
+        def f(*args):
+            intermed = []
+            for i, arg in enumerate(args):
+                intermed.append((arg @ w_list[i]) ** 3)
+
+            return np.sum(intermed, axis=0)
+
+        return f
+
+
+def sample_nonlin_mechanism(rs, d_bottleneck, d_micro):
+    if d_bottleneck is None:  # No parents
+        return None
+    else:
+        d_bottleneck = make_iterable(d_bottleneck)
+
+        # Sample one mlp for each incoming bottleneck
+        mlp_list = []
+        for i in range(len(d_bottleneck)):
+            mlp_list.append(sample_mlp(rs=rs, in_dim=d_bottleneck[i],
+                                       out_dim=d_micro, hidden_dim=d_bottleneck[i],
+                                       hidden_layers=2, nonlinearity='leaky_relu'))
+
+        def f(*args):
+            intermed = []
+            for i, arg in enumerate(args):
+                intermed.append(mlp_list[i](arg))
+
+            return np.sum(intermed, axis=0)
+
+        return f

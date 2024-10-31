@@ -142,11 +142,13 @@ class SCBM(object):
             noise = self.rs.multivariate_normal(mean=np.zeros(var.d),
                                                 cov=np.eye(var.d), size=size)
             ### DEBUG
-            noise = 0000.1 * noise
+            # noise = 0000.1 * noise
             ###
             if var.parents is not None:
+                # Experimental
+                scaler = StandardScaler()
                 # Get bottleneck values
-                bottleneck_values = [bottleneck_fct(parent.value) for
+                bottleneck_values = [scaler.fit_transform(bottleneck_fct(parent.value)) for
                                      parent, bottleneck_fct in
                                      zip(var.parents, var.bottleneck_fcts)]
 
@@ -159,6 +161,10 @@ class SCBM(object):
                 value = var.mechanism(noise, *bottleneck_values)
             else: # Leaf nodes
                 value = var.mechanism(noise)
+
+            # EXPERIMENTAL
+            scaler = StandardScaler()
+            value = scaler.fit_transform(value)
 
             var.value = value
 

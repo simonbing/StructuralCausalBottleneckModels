@@ -4,9 +4,9 @@ import numpy as np
 
 from cbm.data.utils import rand_weight_matrix, rand_undirected_adj_matrix, sample_mrf_prec
 from cbm.data.bottlenecks import sample_convex_comb_bottleneck, \
-    sample_lin_bottleneck, manual_nonlinear
+    sample_lin_bottleneck, manual_nonlinear, sample_nonlin_bottleneck
 from cbm.data.mechanisms import constant_scalar_mechanism, linear_mechanism, \
-    manual_nonlinear_mechanism
+    manual_nonlinear_mechanism, sample_nonlin_mechanism
 from cbm import SCBM, GaussianLangevinMechanism, MacroCausalVar
 
 
@@ -53,6 +53,8 @@ class SCBMSampler(object):
             return sample_convex_comb_bottleneck
         elif mode == 'linear':
             return sample_lin_bottleneck
+        elif mode == 'nonlinear':
+            return sample_nonlin_bottleneck
         elif mode == 'manual_nonlinear':
             return manual_nonlinear
         else:
@@ -63,6 +65,8 @@ class SCBMSampler(object):
             return constant_scalar_mechanism
         elif mode == 'linear':
             return linear_mechanism
+        elif mode == 'nonlinear':
+            return sample_nonlin_mechanism
         elif mode == 'manual_nonlinear':
             return manual_nonlinear_mechanism
         else:

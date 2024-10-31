@@ -33,10 +33,10 @@ def main():
     SEED = 0
     N_SAMPLES = 50000
     D_MACRO = 3
-    D_MICRO = 4
-    D_BOTTLENECK = 2
-    BOTTLENECK_MODE = 'manual_nonlinear'
-    MECH_MODE = 'manual_nonlinear'
+    D_MICRO = 10
+    D_BOTTLENECK = 4
+    BOTTLENECK_MODE = 'nonlinear'
+    MECH_MODE = 'nonlinear'
     P = 0.99
     ESTIMATION_MODE = 'mlp'
 

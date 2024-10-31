@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.preprocessing import StandardScaler
 
 from cbm.estimation.lin_regressors import LinRegressor, ReducedRankRegressor
 from cbm.estimation.ae_regressor import AutoencoderRegressor
@@ -22,6 +23,9 @@ def get_cond_set(source, target, SCBM, causal_order, bottlenecks):
             # print(f'getting bottleneck [{parent_idx}, {source_idx}]')
             bottleneck_fct = bottlenecks[parent_idx, source_idx]
             backdoor_cond_set.append(bottleneck_fct(parent.value))
+            # DEBUG
+            # backdoor_cond_set.append(SCBM.bottleneck_samples[parent_idx, source_idx])
+            # backdoor_cond_set.append(parent.value)
 
     # Get frontdoor conditioning set
     target_parent_idxs = [_get_var_idx(SCBM, var) for var in target.parents]
@@ -36,6 +40,9 @@ def get_cond_set(source, target, SCBM, causal_order, bottlenecks):
             target_parent = SCBM.variables[target_parent_idx]
             bottleneck_fct = bottlenecks[target_parent_idx, target_idx]
             frontdoor_cond_set.append(bottleneck_fct(target_parent.value))
+            # DEBUG
+            # frontdoor_cond_set.append(SCBM.bottleneck_samples[target_parent_idx, target_idx])
+            # frontdoor_cond_set.append(target_parent.value)
 
     cond_set = backdoor_cond_set + frontdoor_cond_set
 
@@ -43,6 +50,8 @@ def get_cond_set(source, target, SCBM, causal_order, bottlenecks):
         # print('None')
         return cond_set
     else:
+        # Experimental
+        # scaler = StandardScaler()
         return np.concatenate(cond_set, axis=1)
 
 
@@ -85,6 +94,10 @@ def estimate_bottleneck_fcts(SCBM, mode='linear'):
                 cond_set = get_cond_set(source, target, SCBM, causal_order,
                                         estimated_bottleneck_fcts)
                 d_cond = cond_set.shape[1] if len(cond_set) > 0 else 0
+                # DEBUG
+                # if len(cond_set) > 0:
+                #     scaler = StandardScaler()
+                #     cond_set = scaler.fit_transform(cond_set)
                 # print(f'd_cond: {d_cond}')
 
                 reg_args = {'seed': SCBM.seed,
@@ -95,8 +108,8 @@ def estimate_bottleneck_fcts(SCBM, mode='linear'):
                             'target': target_idx,
                             'd_cond': d_cond}
                 if mode == 'mlp':
-                    mlp_args = {'dense_x_z': [128, 128, 128],
-                                'dense_z_x': [128, 128, 128],
+                    mlp_args = {'dense_x_z': [128, 128, 128, 128, 128, 128],
+                                'dense_z_x': [128, 128, 128, 128, 128, 128],
                                 'epochs': 100,
                                 'batch_size': 5000,
                                 'learning_rate': 0.0005,
@@ -106,105 +119,105 @@ def estimate_bottleneck_fcts(SCBM, mode='linear'):
                 regressor = reg_model(**reg_args)
 
                 ### DEBUG
-                rs = np.random.RandomState(0)
-                # Reproduce mechanism
-                from cbm.data.utils import rand_undirected_adj_matrix, \
-                    sample_mrf_prec
-
-                M = rand_undirected_adj_matrix(rs=rs, nodes=4)
-                P = sample_mrf_prec(dim=4, M=M, rs=rs)
-                E = np.linalg.inv(P)
-                L = np.linalg.cholesky(E)
-                mu_i = rs.normal(size=source.value.shape)
-                X_i = (L @ mu_i.T).T
-
-                # X_i = rs.normal(size=source.value.shape)
-                W_i = rs.uniform(size=(4, 2))
-                Z = (1 * (X_i @ W_i)) ** 3
-                W_j = rs.uniform(size=(2, 4))
-                X_j = (1 * (Z @ W_j)) ** 3
-
-                M_j = rand_undirected_adj_matrix(rs=rs, nodes=4)
-                P_j = sample_mrf_prec(dim=4, M=M_j, rs=rs)
-                E_j = np.linalg.inv(P_j)
-                L_j = np.linalg.cholesky(E_j)
-                mu_j = rs.normal(size=source.value.shape)
-                noise_j = (L_j @ mu_j.T).T
-                X_j = X_j + noise_j
-
-                from sklearn.preprocessing import StandardScaler
-                scaler = StandardScaler()
-
-                X_i = scaler.fit_transform(X_i)
-                X_j = scaler.fit_transform(X_j)
-                # X_j = X_j + rs.normal(size=X_j.shape)
-
-                regressor.fit(X=X_i, Y=X_j, X_cond=cond_set)
+                # rs = np.random.RandomState(0)
+                # # Reproduce mechanism
+                # from cbm.data.utils import rand_undirected_adj_matrix, \
+                #     sample_mrf_prec
+                #
+                # M = rand_undirected_adj_matrix(rs=rs, nodes=4)
+                # P = sample_mrf_prec(dim=4, M=M, rs=rs)
+                # E = np.linalg.inv(P)
+                # L = np.linalg.cholesky(E)
+                # mu_i = rs.normal(size=source.value.shape)
+                # X_i = (L @ mu_i.T).T
+                #
+                # # X_i = rs.normal(size=source.value.shape)
+                # W_i = rs.uniform(size=(4, 2))
+                # Z = (1 * (X_i @ W_i)) ** 3
+                # W_j = rs.uniform(size=(2, 4))
+                # X_j = (1 * (Z @ W_j)) ** 3
+                #
+                # M_j = rand_undirected_adj_matrix(rs=rs, nodes=4)
+                # P_j = sample_mrf_prec(dim=4, M=M_j, rs=rs)
+                # E_j = np.linalg.inv(P_j)
+                # L_j = np.linalg.cholesky(E_j)
+                # mu_j = rs.normal(size=source.value.shape)
+                # noise_j = (L_j @ mu_j.T).T
+                # X_j = X_j + noise_j
+                #
+                # from sklearn.preprocessing import StandardScaler
+                # scaler = StandardScaler()
+                #
+                # X_i = scaler.fit_transform(X_i)
+                # X_j = scaler.fit_transform(X_j)
+                # # X_j = X_j + rs.normal(size=X_j.shape)
+                #
+                # regressor.fit(X=X_i, Y=X_j, X_cond=cond_set)
                 #########
 
-                # regressor.fit(X=source.value, Y=target.value, X_cond=cond_set)
+                regressor.fit(X=source.value, Y=target.value, X_cond=cond_set)
                 bottleneck_fct = regressor.get_bottleneck_fct()
                 estimated_bottleneck_fcts[source_idx, target_idx] = bottleneck_fct
 
                 ### DEBUG
-                Z_hat = bottleneck_fct(X_i)
-
-                from cbm.eval.mlp_regressor import MLPRegressor
-
-                regr_forward = MLPRegressor(seed=0,
-                                            d=2,
-                                            dense_layers=[128, 128, 128, 128,
-                                                          128, 128],
-                                            learning_rate=0.0005,
-                                            momentum=0.9,
-                                            epochs=100,
-                                            batch_size=5000,
-                                            source=0,
-                                            target=1)
-
-                regr_back = MLPRegressor(seed=0,
-                                         d=2,
-                                         dense_layers=[128, 128, 128, 128,
-                                                       128, 128],
-                                         learning_rate=0.0005,
-                                         momentum=0.9,
-                                         epochs=100,
-                                         batch_size=5000,
-                                         source=0,
-                                         target=1)
-
-                n_train = int(0.8 * len(Z_hat))
-
-                # Z_hat = Z ** 3
-
-                Z = scaler.fit_transform(Z)
-                Z_hat = scaler.fit_transform(Z_hat)
-
-                import matplotlib.colors
-                import matplotlib.pyplot as plt
-                # Color map
-                def get_rgb_color(x, y):
-                    hue = (np.arctan2(y, x) + np.pi) / (2*np.pi)
-                    saturation = np.sqrt(x ** 2 + y ** 2)
-                    # Standardize
-                    saturation = saturation / np.max(saturation)
-                    value = np.ones_like(hue)
-
-                    colors = matplotlib.colors.hsv_to_rgb(np.stack((hue, saturation, value)).T)
-
-                    return colors
-
-                # colors = get_rgb_color(Z[:, 0], Z[:, 1])
+                # Z_hat = bottleneck_fct(X_i)
                 #
-                # plt.scatter(Z[:, 0], Z[:, 1], c=colors)
-                # plt.show()
-
-                regr_forward.fit(Z_hat[:n_train, ...], Z[:n_train, ...])
-                score_forward = regr_forward.score(Z_hat[n_train:, ...], Z[n_train:, ...])
-
-                regr_back.fit(Z[:n_train, ...], Z_hat[:n_train, ...])
-                score_back = regr_back.score(Z[n_train:, ...], Z_hat[n_train:, ...])
-                a=0
+                # from cbm.eval.mlp_regressor import MLPRegressor
+                #
+                # regr_forward = MLPRegressor(seed=0,
+                #                             d=2,
+                #                             dense_layers=[128, 128, 128, 128,
+                #                                           128, 128],
+                #                             learning_rate=0.0005,
+                #                             momentum=0.9,
+                #                             epochs=100,
+                #                             batch_size=5000,
+                #                             source=0,
+                #                             target=1)
+                #
+                # regr_back = MLPRegressor(seed=0,
+                #                          d=2,
+                #                          dense_layers=[128, 128, 128, 128,
+                #                                        128, 128],
+                #                          learning_rate=0.0005,
+                #                          momentum=0.9,
+                #                          epochs=100,
+                #                          batch_size=5000,
+                #                          source=0,
+                #                          target=1)
+                #
+                # n_train = int(0.8 * len(Z_hat))
+                #
+                # # Z_hat = Z ** 3
+                #
+                # Z = scaler.fit_transform(Z)
+                # Z_hat = scaler.fit_transform(Z_hat)
+                #
+                # import matplotlib.colors
+                # import matplotlib.pyplot as plt
+                # # Color map
+                # def get_rgb_color(x, y):
+                #     hue = (np.arctan2(y, x) + np.pi) / (2*np.pi)
+                #     saturation = np.sqrt(x ** 2 + y ** 2)
+                #     # Standardize
+                #     saturation = saturation / np.max(saturation)
+                #     value = np.ones_like(hue)
+                #
+                #     colors = matplotlib.colors.hsv_to_rgb(np.stack((hue, saturation, value)).T)
+                #
+                #     return colors
+                #
+                # # colors = get_rgb_color(Z[:, 0], Z[:, 1])
+                # #
+                # # plt.scatter(Z[:, 0], Z[:, 1], c=colors)
+                # # plt.show()
+                #
+                # regr_forward.fit(Z_hat[:n_train, ...], Z[:n_train, ...])
+                # score_forward = regr_forward.score(Z_hat[n_train:, ...], Z[n_train:, ...])
+                #
+                # regr_back.fit(Z[:n_train, ...], Z_hat[:n_train, ...])
+                # score_back = regr_back.score(Z[n_train:, ...], Z_hat[n_train:, ...])
+                # a=0
                 #########
 
     return estimated_bottleneck_fcts

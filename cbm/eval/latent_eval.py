@@ -88,11 +88,11 @@ def nonlinear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_sample
 
                 # Sanity check 3: apply known bijection
                 # lin_map = np.asarray([[1, 1], [1, -1]])
-                # tf_sample = 0.1 * (gt_bottleneck_samples[i, j] @ lin_map) ** 3
+                # tf_sample = (gt_bottleneck_samples[i, j] @ lin_map) ** 3
 
                 # Sanity check 4: apply injective transformation
                 # lin_map = np.asarray([[1, 1], [1, -1]])
-                # tf_sample = 0.1 * (gt_bottleneck_samples[i, j] @ lin_map) ** 2
+                # tf_sample = (gt_bottleneck_samples[i, j] @ lin_map) ** 2
                 #
                 # source_forward = tf_sample
                 # target_forward = gt_bottleneck_samples[i, j]
@@ -105,7 +105,7 @@ def nonlinear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_sample
                 regr_forward = MLPRegressor(seed=0,
                                             d=d_micro,
                                             dense_layers=[128, 128, 128, 128, 128, 128],
-                                            learning_rate=0.005,
+                                            learning_rate=0.0005,
                                             momentum=0.9,
                                             epochs=100,
                                             batch_size=5000,
@@ -130,7 +130,7 @@ def nonlinear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_sample
                 regr_back = MLPRegressor(seed=0,
                                          d=d_micro,
                                          dense_layers=[128, 128, 128, 128, 128, 128],
-                                         learning_rate=0.005,
+                                         learning_rate=0.0005,
                                          momentum=0.9,
                                          epochs=100,
                                          batch_size=5000,

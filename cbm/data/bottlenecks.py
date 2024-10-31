@@ -1,5 +1,7 @@
 import numpy as np
 
+from cbm.data.utils import sample_mlp
+
 
 def sample_from_simplex(rs, n):
     w = rs.exponential(scale=1.0, size=n)
@@ -31,6 +33,15 @@ def sample_lin_bottleneck(rs, d_micro, d_bottleneck):
         return x @ w
 
     return f
+
+
+def sample_nonlin_bottleneck(rs, d_micro, d_bottleneck):
+    hidden_layers = 2
+    nonlin = 'leaky_relu'
+
+    return sample_mlp(rs=rs, in_dim=d_micro, out_dim=d_bottleneck,
+                      hidden_dim=d_micro, hidden_layers=hidden_layers,
+                      nonlinearity=nonlin)
 
 
 def manual_nonlinear(rs, d_micro, d_bottleneck):
