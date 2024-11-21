@@ -121,7 +121,7 @@ class AutoencoderRegressor(BaseRegressor):
         loss = loss_fn(model, source_batch, target_batch)
         return loss
 
-    def get_bottleneck_fct(self):
+    def get_bottleneck_and_mechanism_fcts(self):
         @nnx.jit
         def inference_step(model, source_batch):
             out_batch = model.encode(source_batch)

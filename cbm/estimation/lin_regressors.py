@@ -22,19 +22,27 @@ class LinRegressor(BaseRegressor):
             X_cat = np.concatenate((X, X_cond), axis=1)
             self.model.fit(X_cat, Y)
 
-    def get_bottleneck_fct(self):
+            a = 0
+
+    def get_bottleneck_and_mechanism_fcts(self):
         # using the first d_bottleneck entries...double check if this makes sense
-        # TODO: this should be the d_bottleneck lin indep rows!
         try:
             # print(self.model.coef_)
-            linear_map = self.model.coef_[:self.d_bottleneck, :self.X_dim].T
+            lin_map = self.model.coef_[:, :self.X_dim].T
+            # linear_map = self.model.coef_[:self.d_bottleneck, :self.X_dim].T
         except AttributeError:  # go here if self.X_dim is not defined, i.e. no conditioning
-            linear_map = self.model.coef_[:self.d_bottleneck, :].T
+            lin_map = self.model.coef_.T
+            # linear_map = self.model.coef_[:self.d_bottleneck, :].T
+        bottleneck_lin_map = lin_map[:, :self.d_bottleneck]
+
+        mechanism_lin_map = np.linalg.pinv(bottleneck_lin_map) @ lin_map
 
         # print(f'Linear map:\n{linear_map}')
-        fct = lambda x: x @ linear_map
+        bottleneck_fct = lambda x: x @ bottleneck_lin_map
 
-        return fct
+        mechanism_fct = lambda x: x @ mechanism_lin_map
+
+        return bottleneck_fct, mechanism_fct
 
 
 class ReducedRankRegressor(LinRegressor):
@@ -54,14 +62,24 @@ class ReducedRankRegressor(LinRegressor):
         self.pca = PCA(n_components=self.d_bottleneck)
         self.pca.fit(Y_hat)
 
-    def get_bottleneck_fct(self):
+    def get_bottleneck_and_mechanism_fcts(self):
         U = self.pca.components_
         red_components = U.T @ U @ self.model.coef_
-        try:
-            linear_map = red_components[:self.d_bottleneck, :self.X_dim].T
-        except AttributeError:  # go here if self.X_dim is not defined, i.e. no conditioning
-            linear_map = red_components[:self.d_bottleneck, :].T
-        # print(f'Linear map:\n{linear_map}')
-        fct = lambda x: x @ linear_map
 
-        return fct
+        try:
+            # print(self.model.coef_)
+            bottleneck_components = red_components[:, :self.X_dim].T
+            lin_map = self.model.coef_[:, :self.X_dim].T
+        except AttributeError:  # go here if self.X_dim is not defined, i.e. no conditioning
+            bottleneck_components = red_components.T
+            lin_map = self.model.coef_.T
+            # linear_map = self.model.coef_[:self.d_bottleneck, :].T
+        bottleneck_lin_map = bottleneck_components[:, :self.d_bottleneck]
+
+        mechanism_lin_map = np.linalg.pinv(bottleneck_lin_map) @ lin_map
+        # print(f'Linear map:\n{linear_map}')
+        bottleneck_fct = lambda x: x @ bottleneck_lin_map
+
+        mechanism_fct = lambda x: x @ mechanism_lin_map
+
+        return bottleneck_fct, mechanism_fct

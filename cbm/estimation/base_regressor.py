@@ -17,7 +17,7 @@ class BaseRegressor(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_bottleneck_fct(self):
+    def get_bottleneck_and_mechanism_fcts(self):
         """
         This should return a function that can be called to embed samples to the bottleneck space.
         """
