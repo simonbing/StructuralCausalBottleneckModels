@@ -1,1 +1,1 @@
-from cbm.estimation.estimator import estimate_bottleneck_fcts
+from cbm.estimation.estimator import estimate_bottleneck_and_mechanism_fcts, estimate_effects_ols
