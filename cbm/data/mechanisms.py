@@ -105,7 +105,7 @@ def sample_nonlin_mechanism(rs, d_bottleneck, d_micro):
         for i in range(len(d_bottleneck)):
             mlp_list.append(sample_mlp(rs=rs, in_dim=d_bottleneck[i],
                                        out_dim=d_micro, hidden_dim=d_bottleneck[i],
-                                       hidden_layers=2, nonlinearity='leaky_relu'))
+                                       hidden_layers=4, nonlinearity='leaky_relu'))
 
         def f(*args):
             intermed = []
