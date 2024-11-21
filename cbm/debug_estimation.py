@@ -2,7 +2,7 @@ import numpy as np
 import wandb
 
 from cbm.data import SCBMSampler
-from cbm.estimation import estimate_bottleneck_fcts
+from cbm.estimation import estimate_bottleneck_and_mechanism_fcts
 from cbm.eval import linear_bottleneck_eval, nonlinear_bottleneck_eval
 
 
@@ -33,15 +33,15 @@ def main():
     SEED = 0
     N_SAMPLES = 50000
     D_MACRO = 3
-    D_MICRO = 10
-    D_BOTTLENECK = 4
-    BOTTLENECK_MODE = 'nonlinear'
-    MECH_MODE = 'nonlinear'
+    D_MICRO = 4
+    D_BOTTLENECK = 2
+    BOTTLENECK_MODE = 'linear'
+    MECH_MODE = 'linear'
     P = 0.99
-    ESTIMATION_MODE = 'mlp'
+    ESTIMATION_MODE = 'linear'
 
     # wandb stuff
-    logging = True
+    logging = False
 
     wandb_config = dict(
         seed=SEED,
@@ -78,7 +78,7 @@ def main():
     # mode = 'reduced_rank'
     mode = 'mlp'
 
-    estimated_bottlenecks = estimate_bottleneck_fcts(test_scbm, mode=ESTIMATION_MODE)
+    estimated_bottlenecks, _ = estimate_bottleneck_and_mechanism_fcts(test_scbm, mode=ESTIMATION_MODE)
 
     # Apply learned bottlenecks
     estimated_bottleneck_samples = np.empty_like(estimated_bottlenecks, dtype=object)
