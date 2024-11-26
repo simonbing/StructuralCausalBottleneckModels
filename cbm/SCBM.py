@@ -174,7 +174,7 @@ class SCBM(object):
         # scaler = StandardScaler()
         # values = [scaler.fit_transform(val) for val in values]
 
-        return values
+        return values, self.bottleneck_samples.copy()
 
     def intervene(self, iv):
         """
