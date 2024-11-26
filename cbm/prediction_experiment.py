@@ -11,6 +11,7 @@ import wandb
 from cbm.data import SCBMSampler
 from cbm.estimation import estimate_effects_ols, estimate_bottleneck_and_mechanism_fcts
 from cbm.estimation.utils import _get_var_idx
+from cbm.SCBM_models import get_SCBM_tf_1
 
 
 def single_prediction_run(seed, n_samples, d_macro, d_micro, d_bottleneck,
@@ -41,18 +42,23 @@ def single_prediction_run(seed, n_samples, d_macro, d_micro, d_bottleneck,
         config=wandb_config
     )
 
-    sampler = SCBMSampler(seed=seed,
-                          d_macro=d_macro,
-                          d_micro=d_micro,
-                          d_bottleneck=d_bottleneck,
-                          bottleneck_mode=bottleneck_mode,
-                          mech_mode=mech_mode,
-                          p=p)
+    # sampler = SCBMSampler(seed=seed,
+    #                       d_macro=d_macro,
+    #                       d_micro=d_micro,
+    #                       d_bottleneck=d_bottleneck,
+    #                       bottleneck_mode=bottleneck_mode,
+    #                       mech_mode=mech_mode,
+    #                       p=p)
+    #
+    # test_scbm = sampler.sample()
 
-    test_scbm = sampler.sample()
+    ### Hardcoded SCBM goes here
+    test_scbm = get_SCBM_tf_1(seed=seed, d=d_micro)
 
-    n_train = int(0.8 * n_samples)
-    n_test = int(0.2 * n_samples)
+    # n_train = int(0.8 * n_samples)
+    # n_test = int(0.2 * n_samples)
+    n_train = 100
+    n_test = 1000
 
     # Train sample last since these are saved in SCBM object and used for estimation
     test_sample = test_scbm.sample(size=n_test)
@@ -71,13 +77,20 @@ def single_prediction_run(seed, n_samples, d_macro, d_micro, d_bottleneck,
 
             dim = test_scbm.A.shape[0]
             estimated_effect_fcts = np.empty_like(estimated_bottleneck_fcts)
+
+            # Function factory
+            def make_effect_fct(i, j):
+                bottleneck_fct = estimated_bottleneck_fcts[i, j]
+                mechanism_fct = estimated_mechanism_fcts[i, j]
+
+                def effect_fct(x):
+                    return mechanism_fct(bottleneck_fct(x))
+                return effect_fct
+
             for i in range(dim):
                 for j in range(dim):
                     if estimated_bottleneck_fcts[i, j] is not None:
-                        bottleneck_fct = estimated_bottleneck_fcts[i, j]
-                        mechanism_fct = estimated_mechanism_fcts[i, j]
-                        effect_fct = lambda x: mechanism_fct(bottleneck_fct(x))
-                        estimated_effect_fcts[i, j] = effect_fct
+                        estimated_effect_fcts[i, j] = make_effect_fct(i, j)
 
         # Get errors for all predictions
         estimates = np.empty(test_scbm.A.shape[0], dtype=object)
@@ -146,7 +159,8 @@ def main():
     PRED_NODE = 2  # which node to plot
 
     for seed in seeds:
-        sample_sizes = [100, 200, 1000, 10000, 50000, 100000]
+        # sample_sizes = [100, 200, 1000, 10000, 50000, 100000]
+        sample_sizes = [1]
 
         output_list = []
         for sample_size in sample_sizes:

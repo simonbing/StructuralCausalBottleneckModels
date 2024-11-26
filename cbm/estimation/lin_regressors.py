@@ -37,10 +37,11 @@ class LinRegressor(BaseRegressor):
 
         mechanism_lin_map = np.linalg.pinv(bottleneck_lin_map) @ lin_map
 
-        # print(f'Linear map:\n{linear_map}')
-        bottleneck_fct = lambda x: x @ bottleneck_lin_map
+        def bottleneck_fct(x):
+            return x @ bottleneck_lin_map
 
-        mechanism_fct = lambda x: x @ mechanism_lin_map
+        def mechanism_fct(x):
+            return x @ mechanism_lin_map
 
         return bottleneck_fct, mechanism_fct
 
@@ -77,9 +78,11 @@ class ReducedRankRegressor(LinRegressor):
         bottleneck_lin_map = bottleneck_components[:, :self.d_bottleneck]
 
         mechanism_lin_map = np.linalg.pinv(bottleneck_lin_map) @ lin_map
-        # print(f'Linear map:\n{linear_map}')
-        bottleneck_fct = lambda x: x @ bottleneck_lin_map
 
-        mechanism_fct = lambda x: x @ mechanism_lin_map
+        def bottleneck_fct(x):
+            return x @ bottleneck_lin_map
+
+        def mechanism_fct(x):
+            return x @ mechanism_lin_map
 
         return bottleneck_fct, mechanism_fct
