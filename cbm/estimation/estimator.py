@@ -6,7 +6,7 @@ from cbm.estimation.ae_regressor import AutoencoderRegressor
 from cbm.estimation.utils import _get_var_idx, sort_parent_idxs
 
 
-def get_cond_set(source, target, SCBM, causal_order, bottlenecks,
+def get_cond_set(source, target, SCBM, samples, causal_order, estimated_bn_fcts,
                  no_bottlenecks=False):
     # print('Cond. set:')
     backdoor_cond_set = []
@@ -23,10 +23,12 @@ def get_cond_set(source, target, SCBM, causal_order, bottlenecks,
             # print(f'backdoor: {parent_idx}')
             # print(f'getting bottleneck [{parent_idx}, {source_idx}]')
             if no_bottlenecks:
-                backdoor_cond_set.append(parent.value)
+                # backdoor_cond_set.append(parent.value)
+                backdoor_cond_set.append(samples[parent_idx])
             else:
-                bottleneck_fct = bottlenecks[parent_idx, source_idx]
-                backdoor_cond_set.append(bottleneck_fct(parent.value))
+                bottleneck_fct = estimated_bn_fcts[parent_idx, source_idx]
+                # backdoor_cond_set.append(bottleneck_fct(parent.value))
+                backdoor_cond_set.append((bottleneck_fct(samples[parent_idx])))
                 # DEBUG
                 # backdoor_cond_set.append(SCBM.bottleneck_samples[parent_idx, source_idx])
                 # backdoor_cond_set.append(parent.value)
@@ -43,10 +45,12 @@ def get_cond_set(source, target, SCBM, causal_order, bottlenecks,
         for target_parent_idx in target_parent_idxs_sub:
             target_parent = SCBM.variables[target_parent_idx]
             if no_bottlenecks:
-                frontdoor_cond_set.append(target_parent.value)
+                # frontdoor_cond_set.append(target_parent.value)
+                frontdoor_cond_set.append(samples[target_parent_idx])
             else:
-                bottleneck_fct = bottlenecks[target_parent_idx, target_idx]
-                frontdoor_cond_set.append(bottleneck_fct(target_parent.value))
+                bottleneck_fct = estimated_bn_fcts[target_parent_idx, target_idx]
+                # frontdoor_cond_set.append(bottleneck_fct(target_parent.value))
+                frontdoor_cond_set.append(bottleneck_fct(samples[target_parent_idx]))
                 # DEBUG
                 # frontdoor_cond_set.append(SCBM.bottleneck_samples[target_parent_idx, target_idx])
                 # frontdoor_cond_set.append(target_parent.value)
@@ -62,7 +66,7 @@ def get_cond_set(source, target, SCBM, causal_order, bottlenecks,
         return np.concatenate(cond_set, axis=1)
 
 
-def estimate_bottleneck_and_mechanism_fcts(SCBM, mode='linear'):
+def estimate_bottleneck_and_mechanism_fcts(SCBM, samples, mode='linear'):
     # Matrix to save the estimated bottleneck functions.
     # Save these according to adjacency matrix.
     estimated_bottleneck_fcts = np.empty_like(SCBM.A, dtype=object)
@@ -99,7 +103,7 @@ def estimate_bottleneck_and_mechanism_fcts(SCBM, mode='linear'):
             for source_idx in reversed(parent_idxs_sort):
                 # print(f'target: {child_idx}')
                 source = SCBM.variables[source_idx]
-                cond_set = get_cond_set(source, target, SCBM, causal_order,
+                cond_set = get_cond_set(source, target, SCBM, samples, causal_order,
                                         estimated_bottleneck_fcts)
                 # cond_set = []
                 d_cond = cond_set.shape[1] if len(cond_set) > 0 else 0
