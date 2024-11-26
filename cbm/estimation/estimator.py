@@ -27,9 +27,9 @@ def get_cond_set(source, target, SCBM, causal_order, bottlenecks,
             else:
                 bottleneck_fct = bottlenecks[parent_idx, source_idx]
                 backdoor_cond_set.append(bottleneck_fct(parent.value))
-            # DEBUG
-            # backdoor_cond_set.append(SCBM.bottleneck_samples[parent_idx, source_idx])
-            # backdoor_cond_set.append(parent.value)
+                # DEBUG
+                # backdoor_cond_set.append(SCBM.bottleneck_samples[parent_idx, source_idx])
+                # backdoor_cond_set.append(parent.value)
 
     # Get frontdoor conditioning set
     target_parent_idxs = [_get_var_idx(SCBM, var) for var in target.parents]
@@ -47,9 +47,9 @@ def get_cond_set(source, target, SCBM, causal_order, bottlenecks,
             else:
                 bottleneck_fct = bottlenecks[target_parent_idx, target_idx]
                 frontdoor_cond_set.append(bottleneck_fct(target_parent.value))
-            # DEBUG
-            # frontdoor_cond_set.append(SCBM.bottleneck_samples[target_parent_idx, target_idx])
-            # frontdoor_cond_set.append(target_parent.value)
+                # DEBUG
+                # frontdoor_cond_set.append(SCBM.bottleneck_samples[target_parent_idx, target_idx])
+                # frontdoor_cond_set.append(target_parent.value)
 
     cond_set = backdoor_cond_set + frontdoor_cond_set
 
