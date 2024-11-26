@@ -168,7 +168,10 @@ def estimate_bottleneck_and_mechanism_fcts(SCBM, samples, mode='linear'):
                 # regressor.fit(X=X_i, Y=X_j, X_cond=cond_set)
                 #########
 
-                regressor.fit(X=source.value, Y=target.value, X_cond=cond_set)
+                # regressor.fit(X=source.value, Y=target.value, X_cond=cond_set)
+                regressor.fit(X=samples[source_idx],
+                              Y=samples[target_idx],
+                              X_cond=cond_set)
                 # TODO: add saving of mechanism functions as well
                 bottleneck_fct, mechanism_fct = regressor.get_bottleneck_and_mechanism_fcts()
                 estimated_bottleneck_fcts[source_idx, target_idx] = bottleneck_fct
