@@ -241,7 +241,7 @@ def estimate_bottleneck_and_mechanism_fcts(SCBM, samples, mode='linear'):
     return estimated_bottleneck_fcts, estimated_mechanism_fcts
 
 
-def estimate_effects_ols(SCBM):
+def estimate_effects_ols(SCBM, samples):
     """
     Estimate the overall (linear) effect between all macro nodes of an SCBM.
     :param SCBM:
@@ -270,7 +270,7 @@ def estimate_effects_ols(SCBM):
             for source_idx in reversed(parent_idxs_sort):
                 # print(f'target: {child_idx}')
                 source = SCBM.variables[source_idx]
-                cond_set = get_cond_set(source, target, SCBM, causal_order,
+                cond_set = get_cond_set(source, target, SCBM, samples, causal_order,
                                         None, no_bottlenecks=True)
                 d_cond = cond_set.shape[1] if len(cond_set) > 0 else 0
 
@@ -282,7 +282,10 @@ def estimate_effects_ols(SCBM):
                                          target=target_idx,
                                          d_cond=d_cond)
 
-                regressor.fit(X=source.value, Y=target.value, X_cond=cond_set)
+                # regressor.fit(X=source.value, Y=target.value, X_cond=cond_set)
+                regressor.fit(X=samples[source_idx],
+                              Y=samples[target_idx],
+                              X_cond=cond_set)
                 effect_fct, _ = regressor.get_bottleneck_and_mechanism_fcts()
 
                 estimated_effect_fcts[source_idx, target_idx] = effect_fct
