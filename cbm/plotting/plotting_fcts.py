@@ -11,22 +11,11 @@ plt.rcParams.update({
 })
 
 
-def plot_multiple_bn_estimation_runs(results, x_name, x_values, y_name,
+def plot_multiple_bn_estimation_runs(results, x_name, y_name,
                                      save=False, save_path=None):
-    n_seeds, n_x_values = results.shape
-
-    x_values_data = np.repeat([str(x) for x in x_values], n_seeds)
-
-    y_data = np.empty(shape=n_seeds*n_x_values)
-    for i in range(n_seeds):
-        for j in range(n_x_values):
-            y_data[i+j*n_x_values] = results[i, j]
-
-    plot_df = pd.DataFrame({x_name: x_values_data,
-                            y_name: y_data})
 
     fig = plt.figure()
-    ax = sns.barplot(data=plot_df, x=x_name, y=y_name,
+    ax = sns.barplot(data=results, x=x_name, y=y_name,
                      palette=["#648fff"])
 
     match x_name:
