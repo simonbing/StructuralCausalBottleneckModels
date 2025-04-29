@@ -57,12 +57,12 @@ def single_prediction_run(seed, n_samples, d_macro, d_micro, d_bottleneck,
 
     # n_train = int(0.8 * n_samples)
     # n_test = int(0.2 * n_samples)
-    n_train = 100
+    n_train = n_samples
     n_test = 1000
 
     # Train sample last since these are saved in SCBM object and used for estimation
-    test_sample = test_scbm.sample(size=n_test)
-    train_sample = test_scbm.sample(size=n_train)
+    test_sample, test_bn_sample = test_scbm.sample(size=n_test)
+    train_sample, train_bn_sample = test_scbm.sample(size=n_train)
 
     out_dict = {}
 
@@ -70,7 +70,7 @@ def single_prediction_run(seed, n_samples, d_macro, d_micro, d_bottleneck,
         # TODO: move this its own function
         # Fit the chosen estimator(s)
         if predictor == 'ols':
-            estimated_effect_fcts = estimate_effects_ols(test_scbm)
+            estimated_effect_fcts = estimate_effects_ols(test_scbm, test_sample)
         elif predictor == 'bottleneck':
             estimated_bottleneck_fcts, estimated_mechanism_fcts = estimate_bottleneck_and_mechanism_fcts(
                 test_scbm, mode='linear')
@@ -138,7 +138,7 @@ def main():
     # Move these params to flags at some point
     GLOBAL_SEED = 42
     D_MACRO = 3
-    D_MICRO = 50
+    D_MICRO = 90
     D_BOTTLENECK = 3
     BOTTLENECK_MODE = 'linear'
     MECH_MODE = 'linear'
@@ -160,7 +160,7 @@ def main():
 
     for seed in seeds:
         # sample_sizes = [100, 200, 1000, 10000, 50000, 100000]
-        sample_sizes = [1]
+        sample_sizes = [100, 200, 300, 500, 1000]
 
         output_list = []
         for sample_size in sample_sizes:
@@ -209,7 +209,6 @@ def main():
     fig.show()
 
     a=0
-
 
 
 if __name__ == '__main__':
