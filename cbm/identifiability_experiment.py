@@ -1,7 +1,11 @@
 import os
+import sys
 
 from absl import flags, app
 import numpy as np
+import pandas as pd
+import seaborn as sns
+import wandb
 
 from cbm.data import SCBMSampler
 from cbm.estimation import estimate_bottleneck_and_mechanism_fcts
@@ -20,6 +24,7 @@ flags.DEFINE_integer('d_macro', 3, 'Number macro-variables.')
 flags.DEFINE_integer('d_micro', 5, 'Number of micro-variables (per macro-variable).')
 flags.DEFINE_integer('d_bn', 2, 'Dimension of bottleneck spaces.')
 flags.DEFINE_string('estimation_mode', 'linear', 'Estimation mode.')
+flags.DEFINE_enum('metric', 'r2', ['r2', 'mse'], 'Evaluation metric.')
 flags.DEFINE_string('results_root',
                     '/Users/Simon/Documents/PhD/Projects/CausalBottleneckModels/results',
                     'Root path to results directory.')
@@ -27,7 +32,7 @@ flags.DEFINE_bool('save', False, 'Whether to save results.')
 
 
 def single_bn_estimation_run(seed, n_samples, d_macro, d_micro, d_bn,
-                             mode='linear', p=0.7):
+                             mode='linear', p=0.7, metric='r2'):
     match mode:
         case a if a in ('linear', 'reduced_rank'):
             bn_mech_mode = 'linear'
@@ -41,6 +46,7 @@ def single_bn_estimation_run(seed, n_samples, d_macro, d_micro, d_bn,
                           bottleneck_mode=bn_mech_mode,
                           mech_mode=bn_mech_mode,
                           p=p)
+    # Sample SCBM
     SCBM = sampler.sample()
 
     # Sample from SCBM
@@ -66,25 +72,53 @@ def single_bn_estimation_run(seed, n_samples, d_macro, d_micro, d_bn,
                                                  SCBM.bottleneck_samples)
         case 'mlp':
             eval_matrix = nonlinear_bottleneck_eval(estimated_bn_samples,
-                                                    bn_samples)
+                                                    bn_samples,
+                                                    metric=metric)
     mean_score = np.mean(eval_matrix[eval_matrix != np.array(None)])
 
     return mean_score
 
 
 def main(argv):
+    ############### wandb section ###############
+    # Can be ignored if not using wandb for experiment tracking
+    wandb_config = dict(
+        seed=FLAGS.seed,
+        mode=FLAGS.estimation_mode,
+        x=FLAGS.x
+    )
+
+    gettrace = getattr(sys, 'gettrace', None)
+
+    if gettrace():
+        print('Not using wandb for logging!')
+        wandb_mode = 'offline'
+    else:
+        wandb_mode = 'online'
+
+    wandb.init(
+        entity='bings',
+        project='bottlenecks',
+        mode=wandb_mode,
+        config=wandb_config
+    )
+    ##############################################
+
     results_path = os.path.join(FLAGS.results_root, 'id', FLAGS.estimation_mode,
                                 f"{FLAGS.x}_{'_'.join(FLAGS.x_values)}")
 
-    if os.path.exists(os.path.join(results_path, 'results.npy')):
-        results = np.load(os.path.join(results_path, 'results.npy'))
+    if os.path.exists(os.path.join(results_path, 'results.csv')):
+        results = pd.read_csv(os.path.join(results_path, 'results.csv'))
     else:
-        os.makedirs(results_path)
+        if not os.path.exists(results_path):
+            os.makedirs(results_path)
 
         rs = np.random.RandomState(FLAGS.seed)
-        seeds = rs.randint(0, 1e6, size=FLAGS.n_seeds)
+        seeds = rs.randint(0, 1e5, size=FLAGS.n_seeds)
 
-        results = np.empty((FLAGS.n_seeds, len(FLAGS.x_values)))
+        x_names_list = []
+        metrics_list = []
+
         for i, x_value in enumerate(FLAGS.x_values):
             for j, seed, in enumerate(seeds):
                 run_args = {'seed': seed,
@@ -92,19 +126,22 @@ def main(argv):
                             'd_macro': FLAGS.d_macro,
                             'd_micro': FLAGS.d_micro,
                             'd_bn': FLAGS.d_bn,
-                            'mode': FLAGS.estimation_mode}
+                            'mode': FLAGS.estimation_mode,
+                            'metric': FLAGS.metric}
                 # Change value of varying variable
                 run_args[FLAGS.x] = int(x_value)
 
-                results[j, i] = single_bn_estimation_run(**run_args)
+                x_names_list.append(x_value)
+                metrics_list.append(single_bn_estimation_run(**run_args))
 
-        # Save results matrix
-        np.save(os.path.join(results_path, 'results.npy'), results)
+        results = pd.DataFrame({f'{FLAGS.x}': x_names_list, FLAGS.metric: metrics_list})
+
+        # Save results dataframe
+        results.to_csv(os.path.join(results_path, 'results.csv'))
 
     plot_multiple_bn_estimation_runs(results=results,
                                      x_name=FLAGS.x,
-                                     x_values=FLAGS.x_values,
-                                     y_name='r2' if FLAGS.estimation_mode=='linear' else 'Acc.',
+                                     y_name=FLAGS.metric,
                                      save=FLAGS.save,
                                      save_path=results_path)
     a=0
