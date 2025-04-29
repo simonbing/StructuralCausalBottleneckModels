@@ -4,6 +4,7 @@ import jax.numpy as jnp
 from flax import nnx
 import optax
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score
 import torch
 from torch.utils.data import DataLoader
 import wandb
@@ -100,7 +101,7 @@ class MLPRegressor(object):
         Y_hat_batch = model(X_batch)
         return Y_hat_batch
 
-    def score(self, X, Y):
+    def score(self, X, Y, metric='r2'):
         score_dataloader = DataLoader(CBMDataset(X), batch_size=10000,
                                       shuffle=False, collate_fn=numpy_collate)
         # Get predictions
@@ -111,8 +112,12 @@ class MLPRegressor(object):
 
         Y_hat = jnp.concatenate(Y_hat_list)
 
-        # Calculate mse
-        score = ((Y_hat - Y) ** 2).mean()
+        match metric:
+            case 'r2':
+                score = r2_score(Y, Y_hat)
+            case 'mse':
+                score = ((Y_hat - Y) ** 2).mean()
+
         return score
 
 
