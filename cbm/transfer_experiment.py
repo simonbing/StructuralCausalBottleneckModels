@@ -2,10 +2,11 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
+from cbm.data import SCBMSampler
 from cbm.estimation import estimate_bottleneck_and_mechanism_fcts
 from cbm.SCBM_models import get_SCBM_tf_1
 from cbm.utils import make_iterable
-from cbm.plotting import plot_multiple_runs
+from cbm.plotting import plot_multiple_transfer_runs
 
 
 def single_transfer_run(seed, SCBM, n_bn_train, n_train, n_test, target_idx,
@@ -46,9 +47,10 @@ def single_transfer_run(seed, SCBM, n_bn_train, n_train, n_test, target_idx,
 
         # Estimate bottleneck functions
         bn_train_samples, bn_train_bn_samples = SCBM.sample(size=n_bn_train)
-        estimated_bn_fcts, _ = estimate_bottleneck_and_mechanism_fcts(SCBM,
-                                                                      bn_train_samples,
-                                                                      mode='linear')
+        bn_train_samples = train_samples
+
+        estimated_bn_fcts, estimated_mech_fcts = \
+            estimate_bottleneck_and_mechanism_fcts(SCBM, bn_train_samples, mode='linear')
         regr_bn = LinearRegression()
 
         # TODO: either define a function to pass the nodes of the bottleneck targets or get them somewhere!
@@ -63,6 +65,9 @@ def single_transfer_run(seed, SCBM, n_bn_train, n_train, n_test, target_idx,
         X_cond_bn_test = [estimated_bn_fcts[idx, idx+1](test_samples[idx]) for idx in cond_idxs]
         y_hat_bn_test = regr_bn.predict(X=np.concatenate([test_samples[source_idx],
                                                           *X_cond_bn_test], axis=1))
+
+        y_hat_bn_test = estimated_mech_fcts[0, 2](estimated_bn_fcts[0, 2](test_samples[0])) + \
+                        estimated_mech_fcts[1, 2](estimated_bn_fcts[1, 2](test_samples[1]))
 
         metrics = {
             'mse': mean_squared_error(test_samples[target_idx], y_hat_bn_test),
@@ -90,9 +95,25 @@ def main():
 
     results_arr = np.empty(shape=(len(seeds), len(train_sample_sizes)),
                            dtype=object)
+    sampler = SCBMSampler(seed=GLOBAL_SEED,
+                          d_macro=3,
+                          d_micro=50,
+                          d_bottleneck=2,
+                          bottleneck_mode='linear',
+                          mech_mode='linear',
+                          p=0.99)
     for i, seed in enumerate(seeds):
+        # Sample an SCBM
+        # sampler = SCBMSampler(seed=seed,
+        #                       d_macro=3,
+        #                       d_micro=50,
+        #                       d_bottleneck=2,
+        #                       bottleneck_mode='linear',
+        #                       mech_mode='linear',
+        #                       p=0.99)
+        scbm = sampler.sample()
         # define SCBM for given experiment
-        scbm = get_SCBM_tf_1(seed=seed, d=D_MICRO)
+        # scbm = get_SCBM_tf_1(seed=seed, d=D_MICRO)
 
         output_list = []
         for j, n_train in enumerate(train_sample_sizes):
@@ -107,11 +128,11 @@ def main():
                                                     cond_idxs=0,
                                                     predictors=PREDICTORS)
 
-    plot_multiple_runs(results_arr,
-                       x_name='sample size',
-                       x_values=train_sample_sizes,
-                       y_name='mae',
-                       predictors=PREDICTORS)
+    plot_multiple_transfer_runs(results_arr,
+                                x_name='sample size',
+                                x_values=train_sample_sizes,
+                                y_name='mae',
+                                predictors=PREDICTORS)
 
     a=0
 
