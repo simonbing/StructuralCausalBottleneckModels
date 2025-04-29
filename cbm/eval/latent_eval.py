@@ -57,7 +57,8 @@ def linear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_samples):
     return r2_matrix
 
 
-def nonlinear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_samples):
+def nonlinear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_samples,
+                              metric='r2'):
     assert estimated_bottleneck_samples.shape == gt_bottleneck_samples.shape, \
         'Estimated bottleneck functions and g.t. must have same shape!'
 
@@ -124,7 +125,8 @@ def nonlinear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_sample
                          target_scale[:n_train, ...])
                 score_forward = regr_forward.score(
                     source_scale[n_train:, ...],
-                    target_scale[n_train:, ...])
+                    target_scale[n_train:, ...],
+                    metric=metric)
 
                 # Backward direction
                 regr_back = MLPRegressor(seed=0,
@@ -149,7 +151,8 @@ def nonlinear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_sample
                                  target_scale[:n_train, ...])
                 score_back = regr_back.score(
                     source_scale[n_train:, ...],
-                    target_scale[n_train:, ...])
+                    target_scale[n_train:, ...],
+                    metric=metric)
 
                 mse_matrix[i, j] = (score_forward + score_back) / 2
 
