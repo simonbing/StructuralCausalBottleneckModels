@@ -29,7 +29,7 @@ class AutoencoderRegressor(BaseRegressor):
         self.model = Autoencoder(in_dim=self.d_micro_in, dense_x_z=dense_x_z,
                                  dense_z_x=dense_z_x, z_dim=self.d_bottleneck,
                                  cond_dim=self.d_cond, out_dim=self.d_micro_out,
-                                 rngs=nnx.Rngs(params=self.seed))
+                                 rngs=nnx.Rngs(params=int(self.seed)))
 
         # self.model = MLP(d=self.d_micro_in, dense_layers=[128, 128, 128, 128],
         #                  rngs=nnx.Rngs(params=self.seed))
@@ -140,4 +140,6 @@ class AutoencoderRegressor(BaseRegressor):
             z_out = jnp.concatenate(z_out_list)
             return z_out
 
-        return fct
+        # TODO: add mechanism function, currently returning none
+
+        return fct, None
