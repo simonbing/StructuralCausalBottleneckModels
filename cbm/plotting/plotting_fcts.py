@@ -28,6 +28,8 @@ def plot_multiple_bn_estimation_runs(results, x_name, y_name,
         case 'd_bn':
             x_axis = '$d_{\mathbf{Z}}$'
 
+    ax.set_ylim(top=1.02)
+
     ax.set_xlabel(x_axis)
     ax.set_ylabel('$R^2$')
 
