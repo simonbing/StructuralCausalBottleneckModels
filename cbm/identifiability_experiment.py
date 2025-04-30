@@ -20,7 +20,7 @@ flags.DEFINE_enum('x', None, ['n_samples', 'd_macro', 'd_micro', 'd_bn'],
                   'Variable to experiment over with varying values (passed via x_values)')
 flags.DEFINE_list('x_values', [], 'Range of values to perform experiments over.')
 flags.DEFINE_integer('n_samples', 50000, 'Sample size.')
-flags.DEFINE_integer('d_macro', 3, 'Number macro-variables.')
+flags.DEFINE_integer('d_macro', 10, 'Number macro-variables.')
 flags.DEFINE_integer('d_micro', 5, 'Number of micro-variables (per macro-variable).')
 flags.DEFINE_integer('d_bn', 2, 'Dimension of bottleneck spaces.')
 flags.DEFINE_string('estimation_mode', 'linear', 'Estimation mode.')
@@ -85,7 +85,13 @@ def main(argv):
     wandb_config = dict(
         seed=FLAGS.seed,
         mode=FLAGS.estimation_mode,
-        x=FLAGS.x
+        x=FLAGS.x,
+        x_values=FLAGS.x_values,
+        n_samples=FLAGS.n_samples,
+        d_macro=FLAGS.d_macro,
+        d_micro=FLAGS.d_micro,
+        d_bn=FLAGS.d_bn,
+        metric=FLAGS.metric
     )
 
     gettrace = getattr(sys, 'gettrace', None)
