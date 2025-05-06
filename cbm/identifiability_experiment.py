@@ -20,7 +20,7 @@ flags.DEFINE_integer('n_seeds', 5, 'Number of repetitions of each setting.')
 flags.DEFINE_enum('x', None, ['n_samples', 'd_macro', 'd_micro', 'd_bn'],
                   'Variable to experiment over with varying values (passed via x_values)')
 flags.DEFINE_list('x_values', [], 'Range of values to perform experiments over.')
-flags.DEFINE_integer('n_samples', 50000, 'Sample size.')
+flags.DEFINE_integer('n_samples', 30000, 'Sample size.')
 flags.DEFINE_integer('d_macro', 10, 'Number macro-variables.')
 flags.DEFINE_integer('d_micro', 5, 'Number of micro-variables (per macro-variable).')
 flags.DEFINE_integer('d_bn', 2, 'Dimension of bottleneck spaces.')
