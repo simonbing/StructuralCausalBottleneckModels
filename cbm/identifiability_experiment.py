@@ -1,6 +1,7 @@
 import os
 import sys
 
+import jax
 from absl import flags, app
 import numpy as np
 import pandas as pd
@@ -110,6 +111,9 @@ def main(argv):
     )
     ##############################################
 
+    # Check if gpu is being used
+    print(f'Using device: {jax.default_backend()}')
+
     results_path = os.path.join(FLAGS.results_root, 'id', FLAGS.estimation_mode,
                                 f"{FLAGS.x}_{'_'.join(FLAGS.x_values)}")
 
@@ -141,6 +145,9 @@ def main(argv):
                 metrics_list.append(single_bn_estimation_run(**run_args))
 
         results = pd.DataFrame({f'{FLAGS.x}': x_names_list, FLAGS.metric: metrics_list})
+
+        # Print results
+        print(results)
 
         # Save results dataframe
         results.to_csv(os.path.join(results_path, 'results.csv'))
