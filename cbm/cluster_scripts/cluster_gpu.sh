@@ -4,6 +4,8 @@
 #SBATCH --partition=gpu
 #SBATCH --gpus=1
 
+#SBATCH --mem-per-cpu=0
+
 #SBATCH --account=bd1083
 #SBATCH --output=logs/slurm-%j.out
 #SBATCH --time=12:00:00
