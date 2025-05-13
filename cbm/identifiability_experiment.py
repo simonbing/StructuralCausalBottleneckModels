@@ -114,8 +114,11 @@ def main(argv):
     # Check if gpu is being used
     print(f'Using device: {jax.default_backend()}')
 
-    results_path = os.path.join(FLAGS.results_root, 'id', FLAGS.estimation_mode,
-                                f"{FLAGS.x}_{'_'.join(FLAGS.x_values)}")
+    results_path = os.path.join(FLAGS.results_root,
+                                'id',
+                                FLAGS.estimation_mode,
+                                f"{FLAGS.x}_{'_'.join(FLAGS.x_values)}",
+                                f'{FLAGS.seed}')
 
     if os.path.exists(os.path.join(results_path, 'results.csv')):
         results = pd.read_csv(os.path.join(results_path, 'results.csv'))
