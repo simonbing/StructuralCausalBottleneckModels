@@ -1,5 +1,5 @@
 #! /usr/bin/bash
 
 sbatch ../cluster_gpu.sh python ../../identifiability_experiment.py \
---x n_samples --x_values 1001 --estimation_mode mlp \
+--x n_samples --x_values 1000 --estimation_mode mlp \
 --results_root /work/bd1083/b382081/projects/CausalBottleneckModels/results
