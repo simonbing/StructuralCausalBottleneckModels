@@ -161,3 +161,9 @@ cython_debug/
 
 # wandb
 cbm/wandb
+
+CAR25/
+
+results/
+
+.vscode/*
