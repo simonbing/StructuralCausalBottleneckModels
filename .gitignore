@@ -167,3 +167,5 @@ CAR25/
 results/
 
 .vscode/*
+
+.DS_Store
