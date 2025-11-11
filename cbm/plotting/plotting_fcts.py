@@ -53,7 +53,7 @@ def plot_multiple_transfer_runs(results, x_name, x_values, y_name, predictors, s
         for i in range(n_seeds):
             for k, predictor in enumerate(predictors):
                 # Just a fancy way of flattening an array of dicts of dicts
-                y_data[i+j*n_x_values+k*n_seeds*n_x_values] = results[i, j][predictor][y_name]
+                y_data[i+j*n_seeds+k*n_seeds*n_x_values] = results[i, j][predictor][y_name]
 
     plot_df = pd.DataFrame({'model': model_data,
                             x_name: x_values_data,
