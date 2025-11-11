@@ -165,10 +165,10 @@ def estimate_bottleneck_and_mechanism_fcts(SCBM, samples, mode='linear'):
                 # X_j = scaler.fit_transform(X_j)
                 # # X_j = X_j + rs.normal(size=X_j.shape)
                 #
-                # regressor.fit(X=X_i, Y=X_j, X_cond=cond_set)
+                # regressor.fit(X=X_i, y=X_j, X_cond=cond_set)
                 #########
 
-                # regressor.fit(X=source.value, Y=target.value, X_cond=cond_set)
+                # regressor.fit(X=source.value, y=target.value, X_cond=cond_set)
                 regressor.fit(X=samples[source_idx],
                               Y=samples[target_idx],
                               X_cond=cond_set)
@@ -282,7 +282,7 @@ def estimate_effects_ols(SCBM, samples):
                                          target=target_idx,
                                          d_cond=d_cond)
 
-                # regressor.fit(X=source.value, Y=target.value, X_cond=cond_set)
+                # regressor.fit(X=source.value, y=target.value, X_cond=cond_set)
                 regressor.fit(X=samples[source_idx],
                               Y=samples[target_idx],
                               X_cond=cond_set)
