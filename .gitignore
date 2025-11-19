@@ -161,6 +161,7 @@ cython_debug/
 
 # wandb
 cbm/wandb
+notebooks/wandb/*
 
 CAR25/
 
