@@ -20,6 +20,7 @@ class Autoencoder(nnx.Module):
                 layers_MLP.append(nnx.Linear(dense_x_z[i-1], dense_x_z[i], rngs=rngs))
             layers_MLP.append(nnx.swish)  # TODO: check if this works or we need a different nonlinearity!
             # layers_MLP.append(nnx.leaky_relu)
+            # layers_MLP.append(nnx.sigmoid)
             # Not using any dropout for this simple model
         layers_MLP.append(nnx.Linear(dense_x_z[-1], z_dim, rngs=rngs))
         self.encoder = nnx.Sequential(*layers_MLP)
