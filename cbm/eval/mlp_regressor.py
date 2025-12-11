@@ -14,10 +14,11 @@ from cbm.estimation.jax_utils import CBMDataset, numpy_collate
 
 class MLPRegressor(object):
     def __init__(self, seed, d, dense_layers, learning_rate, momentum, epochs,
-                 batch_size, source, target):
+                 batch_size, source, target, d_out=None):
         self.seed = seed
         torch.manual_seed(self.seed)
         self.d = d
+        self.d_out = d_out
         self.dense_layers = dense_layers
         # Build model
         self.model = self._build_model()
@@ -32,7 +33,7 @@ class MLPRegressor(object):
 
     def _build_model(self):
         return MLP(d=self.d, dense_layers=self.dense_layers,
-                   rngs=nnx.Rngs(params=self.seed))
+                   rngs=nnx.Rngs(params=self.seed), d_out=self.d_out)
 
     @staticmethod
     def loss_fn(model, X_batch, Y_batch):
@@ -55,9 +56,9 @@ class MLPRegressor(object):
         loss = loss_fn(model, X_batch, Y_batch)
         return loss
 
-    def fit(self, X, Y):
+    def fit(self, X, y):
         # Split data into train and val sets
-        X_train, X_val, Y_train, Y_val = train_test_split(X, Y, train_size=0.8,
+        X_train, X_val, Y_train, Y_val = train_test_split(X, y, train_size=0.8,
                                                           random_state=self.seed)
 
         train_dataloader = DataLoader(CBMDataset(X_train, Y_train),
@@ -101,7 +102,7 @@ class MLPRegressor(object):
         Y_hat_batch = model(X_batch)
         return Y_hat_batch
 
-    def score(self, X, Y, metric='r2'):
+    def predict(self, X):
         score_dataloader = DataLoader(CBMDataset(X), batch_size=10000,
                                       shuffle=False, collate_fn=numpy_collate)
         # Get predictions
@@ -111,6 +112,21 @@ class MLPRegressor(object):
             Y_hat_list.append(Y_hat_batch)
 
         Y_hat = jnp.concatenate(Y_hat_list)
+
+        return Y_hat
+
+    def score(self, X, Y, metric='r2'):
+        # score_dataloader = DataLoader(CBMDataset(X), batch_size=10000,
+        #                               shuffle=False, collate_fn=numpy_collate)
+        # # Get predictions
+        # Y_hat_list = []
+        # for X_batch in score_dataloader:
+        #     Y_hat_batch = self.prediction_step(self.best_model, X_batch)
+        #     Y_hat_list.append(Y_hat_batch)
+        #
+        # Y_hat = jnp.concatenate(Y_hat_list)
+
+        Y_hat = self.predict(X)
 
         match metric:
             case 'r2':
@@ -122,7 +138,10 @@ class MLPRegressor(object):
 
 
 class MLP(nnx.Module):
-    def __init__(self, d, dense_layers, rngs):
+    def __init__(self, d, dense_layers, rngs, d_out=None):
+        if not d_out:
+            d_out = d
+
         layers_MLP = []
         for i in range(len(dense_layers)):
             if i == 0:
@@ -131,7 +150,7 @@ class MLP(nnx.Module):
                 layers_MLP.append(nnx.Linear(dense_layers[i-1], dense_layers[i],
                                              rngs=rngs))
             layers_MLP.append(nnx.swish)
-        layers_MLP.append(nnx.Linear(dense_layers[-1], d, rngs=rngs))
+        layers_MLP.append(nnx.Linear(dense_layers[-1], d_out, rngs=rngs))
         self.mlp = nnx.Sequential(*layers_MLP)
 
     def __call__(self, x):
