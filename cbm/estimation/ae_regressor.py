@@ -74,29 +74,47 @@ class AutoencoderRegressor(BaseRegressor):
         log_step_train = 0
         log_step_eval = 0
         for epoch in range(self.epochs):
+            epoch_train_loss = 0
             for batch in train_dataloader:
                 source_batch = batch[:-1]  # also includes X_cond if it's there
                 target_batch = batch[-1]
                 loss = self.train_step(self.model, self.optimizer, source_batch, target_batch)
+                epoch_train_loss += loss
                 wandb.log({f'train loss ({self.source}, {self.target}), estim': loss,
                            f'step_train ({self.source}, {self.target}), estim': log_step_train})
                 log_step_train += 1
+            epoch_train_loss = epoch_train_loss / len(train_dataloader)
+            wandb.log({f'epoch train loss ({self.source}, {self.target}), estim': epoch_train_loss,
+                       f'epoch': epoch})
             # Eval
             epoch_eval_loss = 0
             for batch in val_dataloader:
                 source_batch = batch[:-1]  # also includes X_cond if it's there
                 target_batch = batch[-1]
                 eval_loss = self.eval_step(self.model, source_batch, target_batch)
+                ### DEBUG: take eval loss with best mode
+                # Check if best_model is defined
+                # if 'best_model' not in locals():
+                #     eval_loss = self.eval_step(self.model, source_batch, target_batch)
+                # else:
+                #     eval_loss = self.eval_step(best_model, source_batch, target_batch)
+                ###
                 epoch_eval_loss += eval_loss
                 wandb.log({f'eval loss ({self.source}, {self.target}), estim': eval_loss,
                            f'step_eval ({self.source}, {self.target}), estim': log_step_eval})
                 log_step_eval += 1
             epoch_eval_loss = epoch_eval_loss / len(val_dataloader)
+            wandb.log({f'epoch eval loss ({self.source}, {self.target}), estim': epoch_eval_loss,
+                       f'epoch': epoch})
             if epoch_eval_loss < best_eval_loss:
                 best_model = copy.deepcopy(self.model)
                 best_eval_loss = eval_loss
 
         self.best_model = best_model
+
+        ### DEBUG: Use last model
+        self.best_model = self.model
+        ###
 
         a = 0
 
