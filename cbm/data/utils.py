@@ -6,12 +6,24 @@ def leaky_relu(x):
         return 0.1 * x
     else:
         return x
+    
+def relu(x):
+    return max(0, x)
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
 
 
 def sample_mlp(rs, in_dim, out_dim, hidden_dim, hidden_layers,
                nonlinearity='leaky_relu'):
     if nonlinearity == 'leaky_relu':
         nonlin_f = np.vectorize(leaky_relu)
+    elif nonlinearity == 'relu':
+        nonlin_f = np.vectorize(relu)
+    elif nonlinearity == 'sigmoid':
+        nonlin_f = np.vectorize(sigmoid)
+    elif nonlinearity == 'none':
+        nonlin_f = np.vectorize(lambda x: x)
     else:
         raise ValueError
 
@@ -19,11 +31,38 @@ def sample_mlp(rs, in_dim, out_dim, hidden_dim, hidden_layers,
     for i in range(hidden_layers):
         if i == 0:
             w = rs.uniform(size=(in_dim, hidden_dim))
+            # w = rs.uniform(-1, 1, size=(in_dim, hidden_dim))
+            # w = rs.normal(loc=1.0, scale=1.0, size=(in_dim, hidden_dim))
+            while np.linalg.matrix_rank(w) < min(in_dim, hidden_dim):
+                w = rs.uniform(size=(in_dim, hidden_dim))
+                # w = rs.uniform(-1, 1, size=(in_dim, hidden_dim))
+                # w = rs.normal(loc=1.0, scale=1.0, size=(in_dim, hidden_dim))
         else:
             w = rs.uniform(size=(hidden_dim, hidden_dim))
+            # w = rs.uniform(-1, 1, size=(hidden_dim, hidden_dim))
+            # w = rs.normal(loc=1.0, scale=1.0, size=(hidden_dim, hidden_dim))
+            while np.linalg.matrix_rank(w) < hidden_dim:
+                w = rs.uniform(size=(hidden_dim, hidden_dim))
+                # w = rs.uniform(-1, 1, size=(hidden_dim, hidden_dim))
+                # w = rs.normal(loc=1.0, scale=1.0, size=(hidden_dim, hidden_dim))
+
+        # QR decomposition to get better behaved weights
+        Q, R = np.linalg.qr(w)
+        w = Q
+
         w_list.append(w)
 
     w_out = rs.uniform(size=(hidden_dim, out_dim))
+    # w_out = rs.uniform(-1, 1, size=(hidden_dim, out_dim))
+    # w_out = rs.normal(loc=1.0, scale=1.0, size=(hidden_dim, out_dim))
+    while np.linalg.matrix_rank(w_out) < min(hidden_dim, out_dim):
+        w_out = rs.uniform(size=(hidden_dim, out_dim))
+        # w_out = rs.uniform(-1, 1, size=(hidden_dim, out_dim))
+        # w_out = rs.normal(loc=1.0, scale=1.0, size=(hidden_dim, out_dim))
+    # QR decomposition to get better behaved weights
+    if out_dim < hidden_dim:  # Only do QR for bottleneck mlp, otherwise dimension is too small
+        Q, R = np.linalg.qr(w_out)
+        w_out = Q
 
     def f(x):
         for i in range(hidden_layers):
