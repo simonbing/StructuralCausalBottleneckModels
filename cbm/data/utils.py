@@ -22,6 +22,8 @@ def sample_mlp(rs, in_dim, out_dim, hidden_dim, hidden_layers,
         nonlin_f = np.vectorize(relu)
     elif nonlinearity == 'sigmoid':
         nonlin_f = np.vectorize(sigmoid)
+    elif nonlinearity == 'swish':
+        nonlin_f = np.vectorize(lambda x: x * sigmoid(x))
     elif nonlinearity == 'none':
         nonlin_f = np.vectorize(lambda x: x)
     else:
