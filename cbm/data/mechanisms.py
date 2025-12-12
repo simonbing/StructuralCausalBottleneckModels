@@ -99,7 +99,8 @@ def sample_nonlin_mechanism(rs, d_bottleneck, d_micro):
     hidden_layers = 2
     # nonlin = 'relu'
     # nonlin = 'leaky_relu'
-    nonlin = 'sigmoid'
+    # nonlin = 'sigmoid'
+    nonlin = 'swish'
     # nonlin = 'none'
     ###
     if d_bottleneck is None:  # No parents
