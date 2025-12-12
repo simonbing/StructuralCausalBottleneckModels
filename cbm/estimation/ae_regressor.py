@@ -37,8 +37,25 @@ class AutoencoderRegressor(BaseRegressor):
         self.epochs = epochs
         self.batch_size = batch_size
 
-        self.optimizer = nnx.Optimizer(self.model, optax.adamw(learning_rate,
-                                                               momentum))
+        # lr_scheduler = optax.exponential_decay(init_value=learning_rate,
+        #                                        transition_steps=100,
+        #                                        decay_rate=0.9,
+        #                                        staircase=True)
+        
+        lr_scheduler = optax.warmup_cosine_decay_schedule(
+            init_value=0.0,
+            peak_value=learning_rate,
+            warmup_steps=600,
+            decay_steps=3000,
+            end_value=1e-7,
+        )
+
+        composed_optimizer = optax.chain(
+            optax.clip_by_global_norm(1.0),
+            optax.adamw(learning_rate=lr_scheduler, b1=momentum)
+        )
+
+        self.optimizer = nnx.Optimizer(self.model, composed_optimizer)
 
     def fit(self, X, Y, X_cond=[]):
         if len(X_cond) != 0:
@@ -113,7 +130,7 @@ class AutoencoderRegressor(BaseRegressor):
         self.best_model = best_model
 
         ### DEBUG: Use last model
-        self.best_model = self.model
+        # self.best_model = self.model
         ###
 
         a = 0
