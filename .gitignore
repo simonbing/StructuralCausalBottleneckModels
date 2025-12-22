@@ -167,6 +167,8 @@ CAR25/
 
 results/
 
+wandb/
+
 .vscode/*
 
 .DS_Store
