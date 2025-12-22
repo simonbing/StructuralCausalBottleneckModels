@@ -62,3 +62,23 @@ def plot_multiple_transfer_runs(results, x_name, x_values, y_name, predictors, s
     fig = plt.figure()
     ax = sns.lineplot(data=plot_df, x=x_name, y=y_name, hue='model')
     fig.show()
+
+
+def plot_multiple_misspecifcation_runs(results, x_name, y_name, true_d_bn,
+                                       save=False, save_path=None):
+
+    fig = plt.figure()
+    ax = sns.lineplot(data=results, x=x_name, y=y_name,
+                      palette=["#648fff"])
+    # add vertical red dashed line at the true d_bn value
+    ax.axvline(x=true_d_bn, color='red', linestyle='--', linewidth=1.5)
+    
+    ax.set_ylim(bottom=0.8, top=1.02)
+
+    ax.set_xlabel('Assumed $d_{\\mathbf{Z}}$')
+    ax.set_ylabel('$R^2$')
+
+    fig.show()
+
+    if save:
+        fig.savefig(os.path.join(save_path, 'fig.pdf'), bbox_inches='tight')

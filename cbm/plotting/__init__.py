@@ -1,1 +1,1 @@
-from cbm.plotting.plotting_fcts import plot_multiple_transfer_runs, plot_multiple_bn_estimation_runs
+from cbm.plotting.plotting_fcts import plot_multiple_transfer_runs, plot_multiple_bn_estimation_runs, plot_multiple_misspecifcation_runs
