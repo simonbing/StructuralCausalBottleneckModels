@@ -145,12 +145,17 @@ class SCBM(object):
             # noise = 0000.1 * noise
             ###
             if var.parents is not None:
-                # Experimental
+                # Experimental ##############
                 scaler = StandardScaler()
                 # Get bottleneck values
                 bottleneck_values = [scaler.fit_transform(bottleneck_fct(parent.value)) for
                                      parent, bottleneck_fct in
                                      zip(var.parents, var.bottleneck_fcts)]
+                #############################
+
+                # bottleneck_values = [bottleneck_fct(parent.value) for
+                #                      parent, bottleneck_fct in
+                #                      zip(var.parents, var.bottleneck_fcts)]
 
                 counter = 0
                 for parent in var.parents:

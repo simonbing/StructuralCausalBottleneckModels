@@ -13,6 +13,9 @@ from cbm import SCBM, GaussianLangevinMechanism, MacroCausalVar
 class SCBMSampler(object):
     def __init__(self, seed, d_macro, d_micro, d_bottleneck, bottleneck_mode,
                  mech_mode, p=0.3):
+        """
+        TODO: add docstring
+        """
         self.seed = seed
         self.rs = np.random.RandomState(seed=self.seed)
 
@@ -114,8 +117,19 @@ class SCBMSampler(object):
         for i in range(self.d_macro):
             # Sample internal adjacency matrix
             M = rand_undirected_adj_matrix(rs=self.rs, nodes=self.d_micro[i])
+
+            #### HARDCODED FOR VISUALIZATION ####
+            # Zeros on the anti-diagonal
+            # M = np.ones((self.d_micro[i], self.d_micro[i]))  # internal node sparsity mask
+            # M[0, 3] = M[1, 2] = M[2, 1] = M[3, 0] = 0
+
+            # print(f"M{i}: {M}")
+            #####################################
+
             # Sample precision matrix for internal mechanism
             P = sample_mrf_prec(dim=self.d_micro[i], M=M, rs=self.rs)
+
+            # print(f"P{i}: {P}")
 
             parents = self.A[:, i]
             if np.sum(parents) == 0:  # root node
