@@ -14,22 +14,30 @@ import sys
 
 from absl import app, flags
 import numpy as np
+import pandas as pd
+import wandb
 
 from cbm.data import SCBMSampler
 from cbm.estimation import estimate_bottleneck_and_mechanism_fcts
 from cbm.eval import linear_bottleneck_eval, nonlinear_bottleneck_eval
+from cbm.plotting import plot_multiple_misspecifcation_runs
 
 FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('seed', 0, 'Random seed.')
+flags.DEFINE_integer('n_seeds', 5, 'Number of repetitions of each setting.')
 flags.DEFINE_integer('n_samples', 30000, 'Sample size.')
 flags.DEFINE_integer('d_macro', 10, 'Number macro-variables.')
 flags.DEFINE_integer('d_micro', 5, 'Number of micro-variables (per macro-variable).')
 flags.DEFINE_integer('true_d_bn', 2, 'True dimension of bottleneck spaces.')
 flags.DEFINE_integer('assumed_d_bn', 2, 'Assumed dimension of bottleneck spaces.')
+flags.DEFINE_list('d_bn_values', [], 'Range of values to perform experiments over.')
 flags.DEFINE_float('p', 0.7, 'Connection probability of SCBM.')
 flags.DEFINE_enum('metric', 'r2', ['r2', 'mse'], 'Evaluation metric.')
 flags.DEFINE_string('estimation_mode', 'linear', 'Estimation mode.')
+flags.DEFINE_string('results_root',
+                    '/Users/Simon/Documents/PhD/Projects/CausalBottleneckModels/results',
+                    'Root path to results directory.')
 
 def single_misspecification_run(seed, n_samples, d_macro, d_micro, true_d_bn, assumed_d_bn,
                                 mode='linear', p=0.7, metric='r2'):
@@ -87,8 +95,6 @@ def main(argv):
     wandb_config = dict(
         seed=FLAGS.seed,
         mode=FLAGS.estimation_mode,
-        x=FLAGS.x,
-        x_values=FLAGS.x_values,
         n_samples=FLAGS.n_samples,
         d_macro=FLAGS.d_macro,
         d_micro=FLAGS.d_micro,
@@ -97,28 +103,68 @@ def main(argv):
         p=FLAGS.p,
         metric=FLAGS.metric
     )
+
+    gettrace = getattr(sys, 'gettrace', None)
+
+    if gettrace():
+        print('Not using wandb for logging!')
+        wandb_mode = 'offline'
+    else:
+        wandb_mode = 'online'
 
     wandb.init(
         entity='bings',
         project='bottlenecks',
+        mode=wandb_mode,
         config=wandb_config
     )
     ############### End wandb section ###############
 
-    mean_score = single_misspecification_run(
-        seed=FLAGS.seed,
-        n_samples=FLAGS.n_samples,
-        d_macro=FLAGS.d_macro,
-        d_micro=FLAGS.d_micro,
-        true_d_bn=FLAGS.true_d_bn,
-        assumed_d_bn=FLAGS.assumed_d_bn,
-        mode=FLAGS.estimation_mode,
-        p=FLAGS.p,
-        metric=FLAGS.metric
-    )
+    results_path = os.path.join(FLAGS.results_root,
+                                'misspecification_id',
+                                FLAGS.estimation_mode,
+                                f"assumed_d_bn_{'_'.join(FLAGS.d_bn_values)}",
+                                f'{FLAGS.seed}')
+    
+    if os.path.exists(os.path.join(results_path, 'results.csv')):
+        results = pd.read_csv(os.path.join(results_path, 'results.csv'))
+    else:
+        if not os.path.exists(results_path):
+            os.makedirs(results_path)
 
-    print(f'Mean score: {mean_score}')
-    wandb.log({'mean_score': mean_score})
+        rs = np.random.RandomState(FLAGS.seed)
+        seeds = rs.randint(0, 1e5, size=FLAGS.n_seeds)
+
+        assumed_d_bn_list = []
+        mean_scores = []
+
+        for assumed_d_bn in FLAGS.d_bn_values:
+            for seed in seeds:
+                run_args = {'seed': seed,
+                            'n_samples': FLAGS.n_samples,
+                            'd_macro': FLAGS.d_macro,
+                            'd_micro': FLAGS.d_micro,
+                            'true_d_bn': FLAGS.true_d_bn,
+                            'assumed_d_bn': int(assumed_d_bn),
+                            'mode': FLAGS.estimation_mode,
+                            'p': FLAGS.p,
+                            'metric': FLAGS.metric}
+
+                assumed_d_bn_list.append(assumed_d_bn)
+                mean_scores.append(single_misspecification_run(**run_args))
+
+        results = pd.DataFrame({'assumed_d_bn': assumed_d_bn_list,
+                                FLAGS.metric: mean_scores})
+        
+        # Print results
+        print(results)
+
+        # Save results dataframe
+        results.to_csv(os.path.join(results_path, 'results.csv'))
+
+    # Plot results
+    plot_multiple_misspecifcation_runs(results=results, x_name='assumed_d_bn', y_name=FLAGS.metric,
+                                       true_d_bn=FLAGS.true_d_bn, save=True, save_path=results_path)
 
 if __name__ == '__main__':
     app.run(main)

@@ -66,7 +66,8 @@ def get_cond_set(source, target, SCBM, samples, causal_order, estimated_bn_fcts,
         return np.concatenate(cond_set, axis=1)
 
 
-def estimate_bottleneck_and_mechanism_fcts(SCBM, samples, mode='linear'):
+def estimate_bottleneck_and_mechanism_fcts(SCBM, samples, mode='linear',
+                                           assumed_d_bn=None):
     # Matrix to save the estimated bottleneck functions.
     # Save these according to adjacency matrix.
     estimated_bottleneck_fcts = np.empty_like(SCBM.A, dtype=object)
@@ -116,16 +117,21 @@ def estimate_bottleneck_and_mechanism_fcts(SCBM, samples, mode='linear'):
                 reg_args = {'seed': SCBM.seed,
                             'd_micro_in': source.d,
                             'd_micro_out': target.d,
-                            'd_bottleneck': SCBM.d_bottleneck_matrix[source_idx, target_idx],
+                            'd_bottleneck': SCBM.d_bottleneck_matrix[source_idx, target_idx] if not assumed_d_bn else assumed_d_bn,
                             'source': source_idx,
                             'target': target_idx,
                             'd_cond': d_cond}
                 if mode == 'mlp':
-                    mlp_args = {'dense_x_z': [128, 128, 128, 128, 128, 128],
-                                'dense_z_x': [128, 128, 128, 128, 128, 128],
-                                'epochs': 100,
-                                'batch_size': 5000,
-                                'learning_rate': 0.0005,
+                    mlp_args = {
+                                'dense_x_z': [64, 64],
+                                'dense_z_x': [64, 64],
+                                # 'dense_x_z': [128, 128, 128, 128, 128, 128],
+                                # 'dense_z_x': [128, 128, 128, 128, 128, 128],
+                                'epochs': 500,
+                                # 'batch_size': 512,
+                                # 'learning_rate': 0.000005,
+                                'batch_size': 1024,
+                                'learning_rate': 0.00005,
                                 'momentum': 0.9}
                     reg_args = reg_args | mlp_args
 
