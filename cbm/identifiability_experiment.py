@@ -111,6 +111,9 @@ def main(argv):
     )
     ##############################################
 
+    # Debug
+    jax.config.update("jax_default_matmul_precision", "float32")
+
     # Check if gpu is being used
     print(f'Using device: {jax.default_backend()}')
 
