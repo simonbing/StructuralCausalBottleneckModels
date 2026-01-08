@@ -51,7 +51,7 @@ class AutoencoderRegressor(BaseRegressor):
         )
 
         composed_optimizer = optax.chain(
-            optax.clip_by_global_norm(1.0),
+            # optax.clip_by_global_norm(1.0),
             optax.adamw(learning_rate=lr_scheduler, b1=momentum)
         )
 
