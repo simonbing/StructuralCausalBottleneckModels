@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 
 from cbm.estimation.lin_regressors import LinRegressor, ReducedRankRegressor
-from cbm.estimation.ae_regressor import AutoencoderRegressor
+from cbm.estimation.ae_regressor import AutoencoderRegressor, VariationalAutoencoderRegressor
 from cbm.estimation.utils import _get_var_idx, sort_parent_idxs
 
 
@@ -85,6 +85,8 @@ def estimate_bottleneck_and_mechanism_fcts(SCBM, samples, mode='linear',
         reg_model = ReducedRankRegressor
     elif mode == 'mlp':
         reg_model = AutoencoderRegressor
+    elif mode == 'vae':
+        reg_model = VariationalAutoencoderRegressor
     else:
         pass
 
@@ -121,17 +123,18 @@ def estimate_bottleneck_and_mechanism_fcts(SCBM, samples, mode='linear',
                             'source': source_idx,
                             'target': target_idx,
                             'd_cond': d_cond}
-                if mode == 'mlp':
+                if mode in ['mlp', 'vae']:
                     mlp_args = {
-                                'dense_x_z': [64, 64],
-                                'dense_z_x': [64, 64],
+                                'dense_x_z': [256, 128, 64, 64, 32],
+                                'dense_z_x': [32, 64, 64, 128, 256],
                                 # 'dense_x_z': [128, 128, 128, 128, 128, 128],
                                 # 'dense_z_x': [128, 128, 128, 128, 128, 128],
                                 'epochs': 500,
                                 # 'batch_size': 512,
                                 # 'learning_rate': 0.000005,
                                 'batch_size': 1024,
-                                'learning_rate': 0.00005,
+                                'learning_rate': 0.00001,
+                                # 'learning_rate': 0.00005,
                                 'momentum': 0.9}
                     reg_args = reg_args | mlp_args
 

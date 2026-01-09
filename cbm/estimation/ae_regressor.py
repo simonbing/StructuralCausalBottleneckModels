@@ -14,7 +14,7 @@ from cbm.eval.mlp_regressor import MLP
 #########
 
 from cbm.estimation.base_regressor import BaseRegressor
-from cbm.estimation.jax_models import Autoencoder
+from cbm.estimation.jax_models import Autoencoder, VAE
 from cbm.estimation.jax_utils import CBMDataset, numpy_collate
 
 
@@ -45,8 +45,8 @@ class AutoencoderRegressor(BaseRegressor):
         lr_scheduler = optax.warmup_cosine_decay_schedule(
             init_value=0.0,
             peak_value=learning_rate,
-            warmup_steps=600,
-            decay_steps=3000,
+            warmup_steps=1000,  # 600
+            decay_steps=10000,  # 3000
             end_value=1e-7,
         )
 
@@ -133,8 +133,6 @@ class AutoencoderRegressor(BaseRegressor):
         # self.best_model = self.model
         ###
 
-        a = 0
-
     @staticmethod
     def loss_fn(model, source_batch, target_batch):
         out_batch = model(*source_batch)
@@ -160,6 +158,78 @@ class AutoencoderRegressor(BaseRegressor):
         @nnx.jit
         def inference_step(model, source_batch):
             out_batch = model.encode(source_batch)
+            return out_batch
+
+        def fct(x):
+            inference_dataloader = DataLoader(CBMDataset(x),
+                                              batch_size=10000,
+                                              shuffle=False,
+                                              collate_fn=numpy_collate)
+            z_out_list = []
+            for batch in inference_dataloader:
+                z_out_batch = inference_step(self.best_model, batch)
+                z_out_list.append(z_out_batch)
+
+            z_out = jnp.concatenate(z_out_list)
+            return z_out
+
+        # TODO: add mechanism function, currently returning none
+
+        return fct, None
+    
+
+class VariationalAutoencoderRegressor(AutoencoderRegressor):
+    def __init__(self, seed, d_micro_in, d_micro_out, d_bottleneck, source,
+                 target, d_cond, dense_x_z, dense_z_x, epochs, batch_size,
+                 learning_rate, momentum):
+        super().__init__(seed, d_micro_in, d_micro_out, d_bottleneck, source,
+                         target, d_cond, dense_x_z, dense_z_x, epochs,
+                         batch_size, learning_rate, momentum)
+        # Override model with VAE
+        self.model = VAE(in_dim=self.d_micro_in, dense_x_z=dense_x_z,
+                         dense_z_x=dense_z_x, z_dim=self.d_bottleneck,
+                         cond_dim=self.d_cond, out_dim=self.d_micro_out,
+                         rngs=nnx.Rngs(params=int(self.seed)))
+        
+    @staticmethod
+    def loss_fn(model, source_batch, target_batch):
+        mu, logvar = model.encode(source_batch[0])
+        z = model.reparameterize(mu, logvar)
+        if len(source_batch) > 1:
+            x_cond = source_batch[1]
+            z_cat = jnp.concatenate((z, x_cond), axis=1)
+        else:
+            z_cat = z
+        out_batch = model.decode(z_cat)
+
+        # Reconstruction loss
+        recon_loss = jnp.sum((out_batch - target_batch) ** 2, axis=1).mean()
+        # KL divergence loss
+        kl_loss = -0.5 * jnp.sum(1 + logvar - mu**2 - jnp.exp(logvar), axis=1).mean()
+        # Total loss
+        loss = recon_loss + kl_loss
+        return loss
+    
+    @staticmethod
+    @nnx.jit
+    def train_step(model, optimizer, source_batch, target_batch):
+        grad_fn = nnx.value_and_grad(VariationalAutoencoderRegressor.loss_fn, has_aux=False)
+        loss, grads = grad_fn(model, source_batch, target_batch)
+        optimizer.update(grads)
+        return loss
+
+    @staticmethod
+    @nnx.jit
+    def eval_step(model, source_batch, target_batch):
+        loss_fn = VariationalAutoencoderRegressor.loss_fn
+        loss = loss_fn(model, source_batch, target_batch)
+        return loss
+    
+    def get_bottleneck_and_mechanism_fcts(self):
+        @nnx.jit
+        def inference_step(model, source_batch):
+            mu_batch, logvar_batch = model.encode(source_batch)
+            out_batch = model.reparameterize(mu_batch, logvar_batch)
             return out_batch
 
         def fct(x):
