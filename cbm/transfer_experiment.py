@@ -231,7 +231,7 @@ def main(argv):
 
 
 
-        np.save(os.path.join(save_path, f"{'_'.join(str(item) for item in FLAGS.train_sample_sizes)}_results.npy"), results_arr, allow_pickle=True)
+        np.save(results_arr_path, results_arr, allow_pickle=True)
 
 
     # base_path = '/Users/Simon/Documents/PhD/Projects/CausalBottleneckModels/results_2layer_swish'
