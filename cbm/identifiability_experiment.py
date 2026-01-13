@@ -150,6 +150,8 @@ def main(argv):
                 x_names_list.append(x_value)
                 metrics_list.append(single_bn_estimation_run(**run_args))
 
+                print(f"Finished run {i}-{j}")
+
         results = pd.DataFrame({f'{FLAGS.x}': x_names_list, FLAGS.metric: metrics_list})
 
         # Print results
