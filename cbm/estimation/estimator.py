@@ -136,6 +136,8 @@ def estimate_bottleneck_and_mechanism_fcts(SCBM, samples, mode='linear',
                                 'learning_rate': 0.00001,
                                 # 'learning_rate': 0.00005,
                                 'momentum': 0.9}
+                    if mode == 'vae':
+                        mlp_args['beta'] = 0.1  # Weight of KL term
                     reg_args = reg_args | mlp_args
 
                 regressor = reg_model(**reg_args)

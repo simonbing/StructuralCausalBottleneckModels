@@ -50,12 +50,12 @@ class AutoencoderRegressor(BaseRegressor):
             end_value=1e-7,
         )
 
-        composed_optimizer = optax.chain(
+        self.composed_optimizer = optax.chain(
             # optax.clip_by_global_norm(1.0),
             optax.adamw(learning_rate=lr_scheduler, b1=momentum)
         )
 
-        self.optimizer = nnx.Optimizer(self.model, composed_optimizer)
+        self.optimizer = nnx.Optimizer(self.model, self.composed_optimizer)
 
     def fit(self, X, Y, X_cond=[]):
         if len(X_cond) != 0:
@@ -179,17 +179,22 @@ class AutoencoderRegressor(BaseRegressor):
     
 
 class VariationalAutoencoderRegressor(AutoencoderRegressor):
-    def __init__(self, seed, d_micro_in, d_micro_out, d_bottleneck, source,
+    def __init__(self, seed, beta, d_micro_in, d_micro_out, d_bottleneck, source,
                  target, d_cond, dense_x_z, dense_z_x, epochs, batch_size,
                  learning_rate, momentum):
         super().__init__(seed, d_micro_in, d_micro_out, d_bottleneck, source,
                          target, d_cond, dense_x_z, dense_z_x, epochs,
                          batch_size, learning_rate, momentum)
+        self.__class__.beta = beta
+
         # Override model with VAE
         self.model = VAE(in_dim=self.d_micro_in, dense_x_z=dense_x_z,
                          dense_z_x=dense_z_x, z_dim=self.d_bottleneck,
                          cond_dim=self.d_cond, out_dim=self.d_micro_out,
-                         rngs=nnx.Rngs(params=int(self.seed)))
+                         rngs=nnx.Rngs(params=int(self.seed),
+                                       reparam=int(self.seed)+1))  # Additional prng stream for reparametrization trick
+        
+        self.optimizer = nnx.Optimizer(self.model, self.composed_optimizer)
         
     @staticmethod
     def loss_fn(model, source_batch, target_batch):
@@ -207,7 +212,7 @@ class VariationalAutoencoderRegressor(AutoencoderRegressor):
         # KL divergence loss
         kl_loss = -0.5 * jnp.sum(1 + logvar - mu**2 - jnp.exp(logvar), axis=1).mean()
         # Total loss
-        loss = recon_loss + kl_loss
+        loss = recon_loss + VariationalAutoencoderRegressor.beta * kl_loss
         return loss
     
     @staticmethod
@@ -229,8 +234,8 @@ class VariationalAutoencoderRegressor(AutoencoderRegressor):
         @nnx.jit
         def inference_step(model, source_batch):
             mu_batch, logvar_batch = model.encode(source_batch)
-            out_batch = model.reparameterize(mu_batch, logvar_batch)
-            return out_batch
+            # out_batch = model.reparameterize(mu_batch, logvar_batch)
+            return mu_batch  # Return mean as bottleneck representation
 
         def fct(x):
             inference_dataloader = DataLoader(CBMDataset(x),

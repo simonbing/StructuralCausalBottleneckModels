@@ -23,7 +23,8 @@ class Autoencoder(nnx.Module):
             # layers_MLP.append(nnx.leaky_relu)
             # layers_MLP.append(nnx.sigmoid)
             # Not using any dropout for this simple model
-        layers_MLP.append(nnx.Linear(dense_x_z[-1], z_dim, rngs=rngs))
+        self.encoder_final = nnx.Linear(dense_x_z[-1], z_dim, rngs=rngs)
+        # layers_MLP.append(nnx.Linear(dense_x_z[-1], z_dim, rngs=rngs))
         self.encoder = nnx.Sequential(*layers_MLP)
 
         # Decoder params
@@ -40,7 +41,9 @@ class Autoencoder(nnx.Module):
         self.decoder = nnx.Sequential(*layers_MLP)
 
     def encode(self, x):
-        return self.encoder(x)
+        h = self.encoder(x)
+        z = self.encoder_final(h)
+        return z
 
     def decode(self, z):
         return self.decoder(z)
@@ -86,8 +89,8 @@ class VAE(Autoencoder):
     def reparameterize(self, mu, logvar):
         std = jnp.exp(0.5 * logvar)
 
-        key = self.rngs.noise()
-        eps = jax.random.normal(key, std.shape)
+        eps = jax.random.normal(self.rngs.reparam(), std.shape)
+        
         return mu + eps * std
 
     def __call__(self, *x):
