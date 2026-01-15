@@ -180,7 +180,10 @@ def main(argv):
         results_arr = np.load(results_arr_path, allow_pickle=True)
     else:
         print('No existing results array found, running experiments...')
-        
+
+        if not os.path.exists(results_path):
+            os.makedirs(results_path)
+
         rs = np.random.RandomState(FLAGS.seed)
         seeds = rs.randint(low=0, high=1e5, size=10)
 
