@@ -154,6 +154,9 @@ def main(argv):
     )
     ##############################################
 
+    # Debug
+    jax.config.update("jax_default_matmul_precision", "float32")
+
     GLOBAL_SEED = 0
     D_MICRO = 50
     N_BN_TRAIN = 20000
