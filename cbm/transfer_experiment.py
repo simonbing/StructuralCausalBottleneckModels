@@ -19,6 +19,7 @@ import wandb
 FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('seed', 0, 'Random seed.')
+flags.DEFINE_integer('n_seeds', 10, 'Number of repetitions of each setting.')
 flags.DEFINE_enum('mode', 'linear', ['linear', 'nonlinear'], 'Estimation mode.')
 flags.DEFINE_integer("d_micro", 50, "Number of micro-variables (per macro-variable).")
 flags.DEFINE_integer('n_bn_train', 20000, 'Number of samples for bottleneck training.')
@@ -185,7 +186,7 @@ def main(argv):
             os.makedirs(results_path)
 
         rs = np.random.RandomState(FLAGS.seed)
-        seeds = rs.randint(low=0, high=1e5, size=10)
+        seeds = rs.randint(low=0, high=1e5, size=FLAGS.n_seeds)
 
         # train_sample_sizes = [70, 75, 80, 85, 120, 200]
         # train_sample_sizes = [100, 110, 150, 500, 1000]
@@ -231,6 +232,11 @@ def main(argv):
                                                         cond_idxs=0,
                                                         cond_type=PREDICTORS,
                                                         mode=FLAGS.mode)
+                
+            # Print intermediate results
+            x_mae = np.mean([results_arr[idx, j]['x']['mae'] for idx in range(results_arr.shape[0])])
+            bn_mae = np.mean([results_arr[idx, j]['bn']['mae'] for idx in range(results_arr.shape[0])])
+            print(f"Train size {n_train}:\n x_mae  = {x_mae:.7f}\n bn_mae = {bn_mae:.7f}")
 
 
 
