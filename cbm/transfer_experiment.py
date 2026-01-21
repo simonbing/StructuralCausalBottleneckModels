@@ -31,7 +31,7 @@ flags.DEFINE_string('results_root',
 
 
 def single_transfer_run(seed, SCBM, n_bn_train, n_train, n_test, target_idx,
-                        source_idx, cond_idxs, cond_type=['x', 'bn'],
+                        source_idx, cond_idxs, estimated_bn_fcts, cond_type=['x', 'bn'],
                         mode='linear'):
     cond_idxs = make_iterable(cond_idxs)
 
@@ -82,12 +82,12 @@ def single_transfer_run(seed, SCBM, n_bn_train, n_train, n_test, target_idx,
         # Fit OLS with bottlenecks applied to conditioning set
 
         # Estimate bottleneck functions
-        bn_train_samples, bn_train_bn_samples = SCBM.sample(size=n_bn_train)
-        bn_train_samples = train_samples
+        # bn_train_samples, bn_train_bn_samples = SCBM.sample(size=n_bn_train)
+        # bn_train_samples = train_samples
 
-        bn_mode = 'linear' if mode == 'linear' else 'mlp'
-        estimated_bn_fcts, estimated_mech_fcts = \
-            estimate_bottleneck_and_mechanism_fcts(SCBM, bn_train_samples, mode=bn_mode)
+        # bn_mode = 'linear' if mode == 'linear' else 'mlp'
+        # estimated_bn_fcts, estimated_mech_fcts = \
+        #     estimate_bottleneck_and_mechanism_fcts(SCBM, bn_train_samples, mode=bn_mode)
         if mode == 'linear':
             regr_bn = LinearRegression()
         elif mode == 'nonlinear':
@@ -221,9 +221,20 @@ def main(argv):
         #     # define SCBM for given experiment
         #     # scbm = get_SCBM_tf_1(seed=seed, d=D_MICRO)
 
+        # Refactor code such that bottlenecks only get estimated once per seed and reused
+        bottlenecks_cache = [None] * len(seeds)
+
         for j, n_train in enumerate(FLAGS.train_sample_sizes):
             for i, seed, in enumerate(seeds):
                 scbm = sampler.sample()
+
+                bn_train_samples, bn_train_bn_samples = scbm.sample(size=FLAGS.n_bn_train)
+
+                if bottlenecks_cache[i] is None:
+                    bn_mode = 'linear' if FLAGS.mode == 'linear' else 'mlp'
+                    estimated_bn_fcts, _ = estimate_bottleneck_and_mechanism_fcts(scbm, bn_train_samples, mode=bn_mode)
+                    bottlenecks_cache[i] = estimated_bn_fcts
+
                 # function that performs run for one setting
                 results_arr[i, j] = single_transfer_run(seed=int(seed),
                                                         SCBM=scbm,
@@ -233,6 +244,7 @@ def main(argv):
                                                         target_idx=2,
                                                         source_idx=1,
                                                         cond_idxs=0,
+                                                        estimated_bn_fcts=bottlenecks_cache[i],
                                                         cond_type=PREDICTORS,
                                                         mode=FLAGS.mode)
                 
