@@ -76,11 +76,15 @@ class MLPRegressor(object):
         log_step_train = 0
         log_step_eval = 0
         for epoch in range(self.epochs):
+            epoch_train_loss = 0
             for X_batch, Y_batch in train_dataloader:
                 loss = self.train_step(self.model, self.optimizer, X_batch, Y_batch)
+                epoch_train_loss += loss
                 wandb.log({f'train loss ({self.source}, {self.target})': loss,
                            f'step_train ({self.source}, {self.target})': log_step_train})
                 log_step_train += 1
+            epoch_train_loss = epoch_train_loss / len(train_dataloader)
+            wandb.log({f'epoch train loss ({self.source}, {self.target})': epoch_train_loss, f'epoch': epoch})
             # Eval
             epoch_eval_loss = 0
             for X_batch, Y_batch in val_dataloader:
@@ -90,6 +94,7 @@ class MLPRegressor(object):
                            f'step_eval ({self.source}, {self.target})': log_step_eval})
                 log_step_eval += 1
             epoch_eval_loss = epoch_eval_loss / len(val_dataloader)
+            wandb.log({f'epoch eval loss ({self.source}, {self.target})': epoch_eval_loss, f'epoch': epoch})
             if epoch_eval_loss < best_eval_loss:
                 best_model = copy.deepcopy(self.model)
                 best_eval_loss = epoch_eval_loss
