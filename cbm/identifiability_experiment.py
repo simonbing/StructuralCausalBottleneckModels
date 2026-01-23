@@ -75,6 +75,10 @@ def single_bn_estimation_run(seed, n_samples, d_macro, d_micro, d_bn,
             eval_matrix = nonlinear_bottleneck_eval(estimated_bn_samples,
                                                     bn_samples,
                                                     metric=metric)
+
+    # Sanity check
+    print(eval_matrix)        
+    
     mean_score = np.mean(eval_matrix[eval_matrix != np.array(None)])
 
     return mean_score
