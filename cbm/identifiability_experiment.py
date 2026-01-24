@@ -141,6 +141,7 @@ def main(argv):
 
         for i, x_value in enumerate(FLAGS.x_values):
             for j, seed, in enumerate(seeds):
+                print(f'seed: {seed}')
                 run_args = {'seed': seed,
                             'n_samples': FLAGS.n_samples,
                             'd_macro': FLAGS.d_macro,
