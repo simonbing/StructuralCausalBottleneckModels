@@ -147,7 +147,8 @@ def main(argv):
                             'd_micro': FLAGS.d_micro,
                             'd_bn': FLAGS.d_bn,
                             'mode': FLAGS.estimation_mode,
-                            'metric': FLAGS.metric}
+                            'metric': FLAGS.metric,
+                            'p': 1.0}  # DEBUG
                 # Change value of varying variable
                 run_args[FLAGS.x] = int(x_value)
 
