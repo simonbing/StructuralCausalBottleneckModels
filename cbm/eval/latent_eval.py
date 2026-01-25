@@ -71,7 +71,7 @@ def nonlinear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_sample
     for i in range(d):
         for j in range(d):
             if estimated_bottleneck_samples[i, j] is not None:
-                d_micro = estimated_bottleneck_samples[i, j].shape[1]
+                # d_micro = estimated_bottleneck_samples[i, j].shape[1]
                 n_train = int(train_frac * len(estimated_bottleneck_samples[i, j]))
 
                 # Sanity check 1: random sample and compute score
@@ -104,7 +104,8 @@ def nonlinear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_sample
                 # Fit regressor (in both directions!)
                 # Forward direction
                 regr_forward = MLPRegressor(seed=0,
-                                            d=d_micro,
+                                            d=estimated_bottleneck_samples[i, j].shape[1],
+                                            d_out=gt_bottleneck_samples[i, j].shape[1],
                                             dense_layers=[128, 128, 128, 128, 128, 128],
                                             learning_rate=0.0005,
                                             momentum=0.9,
@@ -130,7 +131,8 @@ def nonlinear_bottleneck_eval(estimated_bottleneck_samples, gt_bottleneck_sample
 
                 # Backward direction
                 regr_back = MLPRegressor(seed=0,
-                                         d=d_micro,
+                                         d=gt_bottleneck_samples[i, j].shape[1],
+                                         d_out=estimated_bottleneck_samples[i, j].shape[1],
                                          dense_layers=[128, 128, 128, 128, 128, 128],
                                          learning_rate=0.0005,
                                          momentum=0.9,
