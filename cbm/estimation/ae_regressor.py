@@ -129,6 +129,10 @@ class AutoencoderRegressor(BaseRegressor):
 
         self.best_model = best_model
 
+        # Experimental: see if we can do unsupervised model selection like this.
+        if self.source == 1:
+            print(f'Best eval loss({self.source}, {self.target}): {best_eval_loss}')
+
         ### DEBUG: Use last model
         # self.best_model = self.model
         ###
