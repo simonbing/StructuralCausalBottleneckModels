@@ -13,6 +13,7 @@ import os
 import sys
 
 from absl import app, flags
+import jax
 import numpy as np
 import pandas as pd
 import wandb
@@ -39,51 +40,53 @@ flags.DEFINE_string('results_root',
                     '/Users/Simon/Documents/PhD/Projects/CausalBottleneckModels/results',
                     'Root path to results directory.')
 
-def single_misspecification_run(seed, n_samples, d_macro, d_micro, true_d_bn, assumed_d_bn,
+def single_misspecification_run(scbm, scbm_samples, scbm_bn_samples, assumed_d_bn,
                                 mode='linear', p=0.7, metric='r2'):
     # I think the main difference to exisiting stuff: adapt estimation to explicitly take assumed_d_bn as input
     
-    match mode:
-        case a if a in ('linear', 'reduced_rank'):
-            bn_mech_mode = 'linear'
-        case 'mlp':
-            bn_mech_mode = 'nonlinear'
+    # match mode:
+    #     case a if a in ('linear', 'reduced_rank'):
+    #         bn_mech_mode = 'linear'
+    #     case 'mlp':
+    #         bn_mech_mode = 'nonlinear'
 
-    sampler = SCBMSampler(seed=seed,
-                          d_macro=d_macro,
-                          d_micro=d_micro,
-                          d_bottleneck=true_d_bn,
-                          bottleneck_mode=bn_mech_mode,
-                          mech_mode=bn_mech_mode,
-                          p=p)
-    # Sample SCBM
-    SCBM = sampler.sample()
+    # sampler = SCBMSampler(seed=seed,
+    #                       d_macro=d_macro,
+    #                       d_micro=d_micro,
+    #                       d_bottleneck=true_d_bn,
+    #                       bottleneck_mode=bn_mech_mode,
+    #                       mech_mode=bn_mech_mode,
+    #                       p=p)
+    # # Sample SCBM
+    # SCBM = sampler.sample()
 
-    # Sample from SCBM
-    samples, bn_samples = SCBM.sample(size=n_samples)
+    # # Sample from SCBM
+    # samples, bn_samples = SCBM.sample(size=n_samples)
 
     # Estimate bottleneck functions
-    estimated_bn_fcts, _ = estimate_bottleneck_and_mechanism_fcts(SCBM=SCBM,
-                                                                  samples=samples,
+    estimated_bn_fcts, _ = estimate_bottleneck_and_mechanism_fcts(SCBM=scbm,
+                                                                  samples=scbm_samples,
                                                                   mode=mode,
                                                                   assumed_d_bn=assumed_d_bn)
     
     # Apply learned bottlenecks
-    n_vars = len(SCBM.variables)
+    n_vars = len(scbm.variables)
     estimated_bn_samples = np.empty_like(estimated_bn_fcts, dtype=object)
     for i in range(n_vars):
         for j in range(n_vars):
             if estimated_bn_fcts[i, j] is not None:
-                estimated_bn_samples[i, j] = estimated_bn_fcts[i, j](samples[i])
+                estimated_bn_samples[i, j] = estimated_bn_fcts[i, j](scbm_samples[i])
 
     # Evaluation
     match mode:
         case a if a in ('linear', 'reduced_rank'):
             eval_matrix = linear_bottleneck_eval(estimated_bn_samples,
-                                                 SCBM.bottleneck_samples)
+                                                 scbm_bn_samples,
+                                                #  scbm.bottleneck_samples,
+                                                 )
         case 'mlp':
             eval_matrix = nonlinear_bottleneck_eval(estimated_bn_samples,
-                                                    bn_samples,
+                                                    scbm_bn_samples,
                                                     metric=metric)
     mean_score = np.mean(eval_matrix[eval_matrix != np.array(None)])
 
@@ -120,6 +123,8 @@ def main(argv):
     )
     ############### End wandb section ###############
 
+    jax.config.update("jax_default_matmul_precision", "float32")
+
     results_path = os.path.join(FLAGS.results_root,
                                 'misspecification_id',
                                 FLAGS.estimation_mode,
@@ -135,20 +140,42 @@ def main(argv):
         rs = np.random.RandomState(FLAGS.seed)
         seeds = rs.randint(0, 1e5, size=FLAGS.n_seeds)
 
+        # Sample data for all seeds and cache
+        scbm_cache = {}
+        match FLAGS.estimation_mode:
+            case a if a in ('linear', 'reduced_rank'):
+                bn_mech_mode = 'linear'
+            case 'mlp':
+                bn_mech_mode = 'nonlinear'
+
+        for seed in seeds:
+            sampler = SCBMSampler(seed=seed,
+                                  d_macro=FLAGS.d_macro,
+                                  d_micro=FLAGS.d_micro,
+                                  d_bottleneck=FLAGS.true_d_bn,
+                                  bottleneck_mode=bn_mech_mode,
+                                  mech_mode=bn_mech_mode,
+                                  p=FLAGS.p)
+
+            scbm = sampler.sample()
+
+            samples, bn_samples = scbm.sample(size=FLAGS.n_samples)
+            scbm_cache[seed] = {'scbm': scbm, 'samples': samples, 'bn_samples': bn_samples}
+
         assumed_d_bn_list = []
         mean_scores = []
 
         for assumed_d_bn in FLAGS.d_bn_values:
             for seed in seeds:
-                run_args = {'seed': seed,
-                            'n_samples': FLAGS.n_samples,
-                            'd_macro': FLAGS.d_macro,
-                            'd_micro': FLAGS.d_micro,
-                            'true_d_bn': FLAGS.true_d_bn,
-                            'assumed_d_bn': int(assumed_d_bn),
-                            'mode': FLAGS.estimation_mode,
-                            'p': FLAGS.p,
-                            'metric': FLAGS.metric}
+                run_args = {
+                    'scbm': scbm_cache[seed]['scbm'],
+                    'scbm_samples': scbm_cache[seed]['samples'],
+                    'scbm_bn_samples': scbm_cache[seed]['bn_samples'],
+                    'assumed_d_bn': int(assumed_d_bn),
+                    'mode': FLAGS.estimation_mode,
+                    'p': FLAGS.p,
+                    'metric': FLAGS.metric
+                }
 
                 assumed_d_bn_list.append(assumed_d_bn)
                 mean_scores.append(single_misspecification_run(**run_args))
@@ -165,6 +192,8 @@ def main(argv):
     # Plot results
     plot_multiple_misspecifcation_runs(results=results, x_name='assumed_d_bn', y_name=FLAGS.metric,
                                        true_d_bn=FLAGS.true_d_bn, save=True, save_path=results_path)
+    
+    a=0
 
 if __name__ == '__main__':
     app.run(main)
