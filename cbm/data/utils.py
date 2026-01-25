@@ -49,8 +49,8 @@ def sample_mlp(rs, in_dim, out_dim, hidden_dim, hidden_layers,
                 # w = rs.normal(loc=1.0, scale=1.0, size=(hidden_dim, hidden_dim))
 
         # QR decomposition to get better behaved weights
-        # Q, R = np.linalg.qr(w)
-        # w = Q
+        Q, R = np.linalg.qr(w)
+        w = Q
 
         w_list.append(w)
 
@@ -63,9 +63,9 @@ def sample_mlp(rs, in_dim, out_dim, hidden_dim, hidden_layers,
         # w_out = rs.normal(loc=1.0, scale=1.0, size=(hidden_dim, out_dim))
     # QR decomposition to get better behaved weights
     if out_dim < hidden_dim:  # Only do QR for bottleneck mlp, otherwise dimension is too small
-        # Q, R = np.linalg.qr(w_out)
-        # w_out = Q
-        pass
+        Q, R = np.linalg.qr(w_out)
+        w_out = Q
+        # pass
 
     def f(x):
         for i in range(hidden_layers):

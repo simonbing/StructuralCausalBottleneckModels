@@ -36,11 +36,11 @@ def sample_lin_bottleneck(rs, d_micro, d_bottleneck):
 
 
 def sample_nonlin_bottleneck(rs, d_micro, d_bottleneck):
-    hidden_layers = 4  # 2
-    nonlin = 'relu'
+    hidden_layers = 2  # 2
+    # nonlin = 'relu'
     # nonlin = 'leaky_relu'
     # nonlin = 'sigmoid'
-    # nonlin = 'swish'
+    nonlin = 'swish'
     # nonlin = 'none'
 
     return sample_mlp(rs=rs, in_dim=d_micro, out_dim=d_bottleneck,

@@ -96,11 +96,11 @@ def manual_nonlinear_mechanism(rs, d_bottleneck, d_micro):
 
 def sample_nonlin_mechanism(rs, d_bottleneck, d_micro):
     # Debug
-    hidden_layers = 4  # 2
-    nonlin = 'relu'
+    hidden_layers = 2  # 2
+    # nonlin = 'relu'
     # nonlin = 'leaky_relu'
     # nonlin = 'sigmoid'
-    # nonlin = 'swish'
+    nonlin = 'swish'
     # nonlin = 'none'
     ###
     if d_bottleneck is None:  # No parents
