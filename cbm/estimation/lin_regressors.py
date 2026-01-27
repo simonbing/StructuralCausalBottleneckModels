@@ -25,14 +25,10 @@ class LinRegressor(BaseRegressor):
             a = 0
 
     def get_bottleneck_and_mechanism_fcts(self):
-        # using the first d_bottleneck entries...double check if this makes sense
         try:
-            # print(self.model.coef_)
             lin_map = self.model.coef_[:, :self.X_dim].T
-            # linear_map = self.model.coef_[:self.d_bottleneck, :self.X_dim].T
         except AttributeError:  # go here if self.X_dim is not defined, i.e. no conditioning
             lin_map = self.model.coef_.T
-            # linear_map = self.model.coef_[:self.d_bottleneck, :].T
         bottleneck_lin_map = lin_map[:, :self.d_bottleneck]
 
         mechanism_lin_map = np.linalg.pinv(bottleneck_lin_map) @ lin_map
@@ -68,13 +64,11 @@ class ReducedRankRegressor(LinRegressor):
         red_components = U.T @ U @ self.model.coef_
 
         try:
-            # print(self.model.coef_)
             bottleneck_components = red_components[:, :self.X_dim].T
             lin_map = self.model.coef_[:, :self.X_dim].T
         except AttributeError:  # go here if self.X_dim is not defined, i.e. no conditioning
             bottleneck_components = red_components.T
             lin_map = self.model.coef_.T
-            # linear_map = self.model.coef_[:self.d_bottleneck, :].T
         bottleneck_lin_map = bottleneck_components[:, :self.d_bottleneck]
 
         mechanism_lin_map = np.linalg.pinv(bottleneck_lin_map) @ lin_map

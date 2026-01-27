@@ -118,14 +118,6 @@ class SCBMSampler(object):
             # Sample internal adjacency matrix
             M = rand_undirected_adj_matrix(rs=self.rs, nodes=self.d_micro[i])
 
-            #### HARDCODED FOR VISUALIZATION ####
-            # Zeros on the anti-diagonal
-            # M = np.ones((self.d_micro[i], self.d_micro[i]))  # internal node sparsity mask
-            # M[0, 3] = M[1, 2] = M[2, 1] = M[3, 0] = 0
-
-            # print(f"M{i}: {M}")
-            #####################################
-
             # Sample precision matrix for internal mechanism
             P = sample_mrf_prec(dim=self.d_micro[i], M=M, rs=self.rs)
 

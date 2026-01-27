@@ -121,16 +121,6 @@ class MLPRegressor(object):
         return Y_hat
 
     def score(self, X, Y, metric='r2'):
-        # score_dataloader = DataLoader(CBMDataset(X), batch_size=10000,
-        #                               shuffle=False, collate_fn=numpy_collate)
-        # # Get predictions
-        # Y_hat_list = []
-        # for X_batch in score_dataloader:
-        #     Y_hat_batch = self.prediction_step(self.best_model, X_batch)
-        #     Y_hat_list.append(Y_hat_batch)
-        #
-        # Y_hat = jnp.concatenate(Y_hat_list)
-
         Y_hat = self.predict(X)
 
         match metric:

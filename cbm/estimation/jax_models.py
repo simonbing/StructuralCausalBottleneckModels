@@ -19,12 +19,8 @@ class Autoencoder(nnx.Module):
                 layers_MLP.append(nnx.Linear(in_dim, dense_x_z[i], rngs=rngs))
             else:
                 layers_MLP.append(nnx.Linear(dense_x_z[i-1], dense_x_z[i], rngs=rngs))
-            layers_MLP.append(nnx.swish)  # TODO: check if this works or we need a different nonlinearity!
-            # layers_MLP.append(nnx.leaky_relu)
-            # layers_MLP.append(nnx.sigmoid)
-            # Not using any dropout for this simple model
+            layers_MLP.append(nnx.swish) 
         self.encoder_final = nnx.Linear(dense_x_z[-1], z_dim, rngs=rngs)
-        # layers_MLP.append(nnx.Linear(dense_x_z[-1], z_dim, rngs=rngs))
         self.encoder = nnx.Sequential(*layers_MLP)
 
         # Decoder params
@@ -36,7 +32,6 @@ class Autoencoder(nnx.Module):
             else:
                 layers_MLP.append(nnx.Linear(dense_z_x[i-1], dense_z_x[i], rngs=rngs))
             layers_MLP.append(nnx.swish)
-            # layers_MLP.append(nnx.leaky_relu)
         layers_MLP.append(nnx.Linear(dense_z_x[-1], out_dim, rngs=rngs))
         self.decoder = nnx.Sequential(*layers_MLP)
 

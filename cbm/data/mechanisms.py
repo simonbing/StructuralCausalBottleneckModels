@@ -63,13 +63,6 @@ def linear_mechanism(rs, d_bottleneck, d_micro):
 
 
 def manual_nonlinear_mechanism(rs, d_bottleneck, d_micro):
-    # f_lin = linear_mechanism(rs, d_bottleneck, d_micro)
-    #
-    # def f(*args):
-    #     y = f_lin(*args)
-    #     # y = y / 1000
-    #     return y**3
-    # return f
 
     if d_bottleneck is None:  # No parents
         return None
@@ -95,7 +88,6 @@ def manual_nonlinear_mechanism(rs, d_bottleneck, d_micro):
 
 
 def sample_nonlin_mechanism(rs, d_bottleneck, d_micro):
-    # Debug
     hidden_layers = 2  # 2
     # nonlin = 'relu'
     # nonlin = 'leaky_relu'

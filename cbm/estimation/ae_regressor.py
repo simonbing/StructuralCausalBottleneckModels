@@ -9,10 +9,6 @@ import torch
 from torch.utils.data import DataLoader
 import wandb
 
-### DEBUG
-from cbm.eval.mlp_regressor import MLP
-#########
-
 from cbm.estimation.base_regressor import BaseRegressor
 from cbm.estimation.jax_models import Autoencoder, VAE
 from cbm.estimation.jax_utils import CBMDataset, numpy_collate
@@ -31,16 +27,8 @@ class AutoencoderRegressor(BaseRegressor):
                                  cond_dim=self.d_cond, out_dim=self.d_micro_out,
                                  rngs=nnx.Rngs(params=int(self.seed)))
 
-        # self.model = MLP(d=self.d_micro_in, dense_layers=[128, 128, 128, 128],
-        #                  rngs=nnx.Rngs(params=self.seed))
-
         self.epochs = epochs
         self.batch_size = batch_size
-
-        # lr_scheduler = optax.exponential_decay(init_value=learning_rate,
-        #                                        transition_steps=100,
-        #                                        decay_rate=0.9,
-        #                                        staircase=True)
         
         lr_scheduler = optax.warmup_cosine_decay_schedule(
             init_value=0.0,
@@ -51,7 +39,6 @@ class AutoencoderRegressor(BaseRegressor):
         )
 
         self.composed_optimizer = optax.chain(
-            # optax.clip_by_global_norm(1.0),
             optax.adamw(learning_rate=lr_scheduler, b1=momentum)
         )
 
@@ -109,13 +96,6 @@ class AutoencoderRegressor(BaseRegressor):
                 source_batch = batch[:-1]  # also includes X_cond if it's there
                 target_batch = batch[-1]
                 eval_loss = self.eval_step(self.model, source_batch, target_batch)
-                ### DEBUG: take eval loss with best mode
-                # Check if best_model is defined
-                # if 'best_model' not in locals():
-                #     eval_loss = self.eval_step(self.model, source_batch, target_batch)
-                # else:
-                #     eval_loss = self.eval_step(best_model, source_batch, target_batch)
-                ###
                 epoch_eval_loss += eval_loss
                 wandb.log({f'eval loss ({self.source}, {self.target}), estim': eval_loss,
                            f'step_eval ({self.source}, {self.target}), estim': log_step_eval})
@@ -128,14 +108,6 @@ class AutoencoderRegressor(BaseRegressor):
                 best_eval_loss = eval_loss
 
         self.best_model = best_model
-
-        # Experimental: see if we can do unsupervised model selection like this.
-        if self.source == 1:
-            print(f'Best eval loss({self.source}, {self.target}): {best_eval_loss}')
-
-        ### DEBUG: Use last model
-        # self.best_model = self.model
-        ###
 
     @staticmethod
     def loss_fn(model, source_batch, target_batch):
@@ -176,8 +148,6 @@ class AutoencoderRegressor(BaseRegressor):
 
             z_out = jnp.concatenate(z_out_list)
             return z_out
-
-        # TODO: add mechanism function, currently returning none
 
         return fct, None
     
@@ -238,7 +208,6 @@ class VariationalAutoencoderRegressor(AutoencoderRegressor):
         @nnx.jit
         def inference_step(model, source_batch):
             mu_batch, logvar_batch = model.encode(source_batch)
-            # out_batch = model.reparameterize(mu_batch, logvar_batch)
             return mu_batch  # Return mean as bottleneck representation
 
         def fct(x):
@@ -253,7 +222,5 @@ class VariationalAutoencoderRegressor(AutoencoderRegressor):
 
             z_out = jnp.concatenate(z_out_list)
             return z_out
-
-        # TODO: add mechanism function, currently returning none
 
         return fct, None
