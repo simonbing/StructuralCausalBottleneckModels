@@ -27,7 +27,7 @@ flags.DEFINE_float('p', 1.0, 'Connection probability of SCBM.')
 flags.DEFINE_enum('metric', 'r2', ['r2', 'mse'], 'Evaluation metric.')
 flags.DEFINE_string('estimation_mode', 'linear', 'Estimation mode.')
 flags.DEFINE_string('results_root',
-                    '/Users/Simon/Documents/PhD/Projects/CausalBottleneckModels/results',
+                    '',
                     'Root path to results directory.')
 
 def estimate_specific_bottleneck_fcts(SCBM, samples, assumed_d_bn,
@@ -137,8 +137,8 @@ def main(argv):
         wandb_mode = 'online'
 
     wandb.init(
-        entity='bings',
-        project='bottlenecks',
+        entity='wandbusername',
+        project='wandbproject',
         mode=wandb_mode,
         config=wandb_config
     )

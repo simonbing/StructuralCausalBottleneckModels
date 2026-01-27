@@ -26,7 +26,7 @@ flags.DEFINE_integer('n_bn_train', 20000, 'Number of samples for bottleneck trai
 flags.DEFINE_integer('n_test', 1000, 'Number of test samples for transfer task.')
 flags.DEFINE_list('train_sample_sizes', [], 'Training sample size range.')
 flags.DEFINE_string('results_root',
-                    '/Users/Simon/Documents/PhD/Projects/CausalBottleneckModels/results',
+                    '',
                     'Root path to results directory.')
 
 
@@ -45,7 +45,6 @@ def single_transfer_run(seed, SCBM, n_bn_train, n_train, n_test, target_idx,
         if mode == 'linear':
             regr_x = LinearRegression()
         elif mode == 'nonlinear':
-            #TODO: adapt all of these params!
             regr_x = MLPRegressor(seed=seed,
                                   d=2*train_samples[0].shape[-1],
                                   d_out=train_samples[0].shape[-1],
@@ -81,13 +80,6 @@ def single_transfer_run(seed, SCBM, n_bn_train, n_train, n_test, target_idx,
     if 'bn' in cond_type:
         # Fit OLS with bottlenecks applied to conditioning set
 
-        # Estimate bottleneck functions
-        # bn_train_samples, bn_train_bn_samples = SCBM.sample(size=n_bn_train)
-        # bn_train_samples = train_samples
-
-        # bn_mode = 'linear' if mode == 'linear' else 'mlp'
-        # estimated_bn_fcts, estimated_mech_fcts = \
-        #     estimate_bottleneck_and_mechanism_fcts(SCBM, bn_train_samples, mode=bn_mode)
         if mode == 'linear':
             regr_bn = LinearRegression()
         elif mode == 'nonlinear':
@@ -95,7 +87,6 @@ def single_transfer_run(seed, SCBM, n_bn_train, n_train, n_test, target_idx,
                                    d=12,  # TODO: automatically calculate this!
                                    d_out=train_samples[0].shape[-1],
                                    dense_layers=[128, 128, 128, 128, 128, 128],
-                                   # dense_layers=[128, 128],
                                    learning_rate=0.0005,
                                    momentum=0.9,
                                    epochs=100,
@@ -104,7 +95,6 @@ def single_transfer_run(seed, SCBM, n_bn_train, n_train, n_test, target_idx,
                                    target=None
                                    )
 
-        # TODO: either define a function to pass the nodes of the bottleneck targets or get them somewhere!
         X_cond_bn_train = [estimated_bn_fcts[idx, idx+1](train_samples[idx]) for idx in cond_idxs]
         y_bn_train = train_samples[target_idx]
 
@@ -116,9 +106,6 @@ def single_transfer_run(seed, SCBM, n_bn_train, n_train, n_test, target_idx,
         X_cond_bn_test = [estimated_bn_fcts[idx, idx+1](test_samples[idx]) for idx in cond_idxs]
         y_hat_bn_test = regr_bn.predict(X=np.concatenate([test_samples[source_idx],
                                                           *X_cond_bn_test], axis=1))
-
-        # y_hat_bn_test = estimated_mech_fcts[0, 2](estimated_bn_fcts[0, 2](test_samples[0])) + \
-        #                 estimated_mech_fcts[1, 2](estimated_bn_fcts[1, 2](test_samples[1]))
 
         metrics_bn = {
             'mse': mean_squared_error(test_samples[target_idx], y_hat_bn_test),
@@ -147,8 +134,8 @@ def main(argv):
         wandb_mode = 'online'
 
     wandb.init(
-        entity='bings',
-        project='bottlenecks',
+        entity='wandbusername',
+        project='wandbproject',
         mode=wandb_mode,
         config=wandb_config
     )
@@ -157,13 +144,7 @@ def main(argv):
     # Debug
     jax.config.update("jax_default_matmul_precision", "float32")
 
-    GLOBAL_SEED = 0
-    D_MICRO = 50
-    N_BN_TRAIN = 20000
-    N_TRAIN = 100
-    N_TEST = 1000
     PREDICTORS = ['x', 'bn']
-    MODE='linear'
 
     # Debug
     jax.config.update("jax_default_matmul_precision", "float32")
@@ -191,9 +172,6 @@ def main(argv):
         rs = np.random.RandomState(FLAGS.seed)
         seeds = rs.randint(low=0, high=1e5, size=FLAGS.n_seeds)
 
-        # train_sample_sizes = [70, 75, 80, 85, 120, 200]
-        # train_sample_sizes = [100, 110, 150, 500, 1000]
-
         FLAGS.train_sample_sizes = [int(size) for size in FLAGS.train_sample_sizes]
 
         results_arr = np.empty(shape=(len(seeds), len(FLAGS.train_sample_sizes)),
@@ -206,22 +184,6 @@ def main(argv):
                             mech_mode=FLAGS.mode,
                             p=0.99)
 
-        # scbm = sampler.sample()
-
-        # for i, seed in enumerate(seeds):
-        #     # Sample an SCBM
-        #     # sampler = SCBMSampler(seed=seed,
-        #     #                       d_macro=3,
-        #     #                       d_micro=50,
-        #     #                       d_bottleneck=2,
-        #     #                       bottleneck_mode='linear',
-        #     #                       mech_mode='linear',
-        #     #                       p=0.99)
-        #     # scbm = sampler.sample()
-        #     # define SCBM for given experiment
-        #     # scbm = get_SCBM_tf_1(seed=seed, d=D_MICRO)
-
-        # Refactor code such that bottlenecks only get estimated once per seed and reused
         bottlenecks_cache = [None] * len(seeds)
 
         for j, n_train in enumerate(FLAGS.train_sample_sizes):
@@ -235,7 +197,6 @@ def main(argv):
                     estimated_bn_fcts, _ = estimate_bottleneck_and_mechanism_fcts(scbm, bn_train_samples, mode=bn_mode)
                     bottlenecks_cache[i] = estimated_bn_fcts
 
-                # function that performs run for one setting
                 results_arr[i, j] = single_transfer_run(seed=int(seed),
                                                         SCBM=scbm,
                                                         n_bn_train=FLAGS.n_bn_train,
@@ -257,18 +218,11 @@ def main(argv):
 
         np.save(results_arr_path, results_arr, allow_pickle=True)
 
-
-    # base_path = '/Users/Simon/Documents/PhD/Projects/CausalBottleneckModels/results_2layer_swish'
-    # save_path = os.path.join(base_path, 'tf', FLAGS.mode)
-
     plot_multiple_transfer_runs(results_arr,
                                 x_name='sample size',
                                 x_values=FLAGS.train_sample_sizes,
                                 y_name='mae',
                                 predictors=PREDICTORS)
-
-    a=0
-
 
 if __name__ == '__main__':
     app.run(main)

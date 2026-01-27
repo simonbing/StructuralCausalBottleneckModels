@@ -1,6 +1,3 @@
-"""
-Simon Bing, 2023, TU Berlin
-"""
 from abc import ABC, abstractmethod
 import inspect
 

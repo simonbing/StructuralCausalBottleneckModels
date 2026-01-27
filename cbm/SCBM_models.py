@@ -1,6 +1,3 @@
-"""
-Contains pre-defined SCBM models.
-"""
 import numpy as np
 
 from cbm.data.utils import rand_weight_matrix, rand_undirected_adj_matrix, sample_mrf_prec

@@ -27,7 +27,7 @@ flags.DEFINE_integer('d_bn', 2, 'Dimension of bottleneck spaces.')
 flags.DEFINE_string('estimation_mode', 'linear', 'Estimation mode.')
 flags.DEFINE_enum('metric', 'r2', ['r2', 'mse'], 'Evaluation metric.')
 flags.DEFINE_string('results_root',
-                    '/Users/Simon/Documents/PhD/Projects/CausalBottleneckModels/results',
+                    '',
                     'Root path to results directory.')
 flags.DEFINE_bool('save', False, 'Whether to save results.')
 
@@ -108,14 +108,13 @@ def main(argv):
         wandb_mode = 'online'
 
     wandb.init(
-        entity='bings',
-        project='bottlenecks',
+        entity='wandusername',
+        project='wandbproject',
         mode=wandb_mode,
         config=wandb_config
     )
     ##############################################
 
-    # Debug
     jax.config.update("jax_default_matmul_precision", "float32")
 
     # Check if gpu is being used
@@ -149,7 +148,7 @@ def main(argv):
                             'd_bn': FLAGS.d_bn,
                             'mode': FLAGS.estimation_mode,
                             'metric': FLAGS.metric,
-                            'p': 1.0}  # DEBUG
+                            'p': 0.7}
                 # Change value of varying variable
                 run_args[FLAGS.x] = int(x_value)
 
@@ -171,8 +170,6 @@ def main(argv):
                                      y_name=FLAGS.metric,
                                      save=FLAGS.save,
                                      save_path=results_path)
-    a=0
-
 
 if __name__ == '__main__':
     app.run(main)

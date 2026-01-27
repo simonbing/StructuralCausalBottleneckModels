@@ -1,6 +1,3 @@
-"""
-Simon Bing, 2023, TU Berlin
-"""
 from collections.abc import Iterable
 import copy
 import inspect
@@ -135,27 +132,17 @@ class SCBM(object):
 
         # Loop over variables
         for i, var in enumerate(self.variables):
-            # Currently, this sampling works for the langevin gaussian case,
-            # might have to adapt it later on
+            # Currently, this sampling works for the langevin gaussian case
 
             # Sample from independent Gaussian
             noise = self.rs.multivariate_normal(mean=np.zeros(var.d),
                                                 cov=np.eye(var.d), size=size)
-            ### DEBUG
-            # noise = 0000.1 * noise
-            ###
             if var.parents is not None:
-                # Experimental ##############
                 scaler = StandardScaler()
                 # Get bottleneck values
                 bottleneck_values = [scaler.fit_transform(bottleneck_fct(parent.value)) for
                                      parent, bottleneck_fct in
                                      zip(var.parents, var.bottleneck_fcts)]
-                #############################
-
-                # bottleneck_values = [bottleneck_fct(parent.value) for
-                #                      parent, bottleneck_fct in
-                #                      zip(var.parents, var.bottleneck_fcts)]
 
                 counter = 0
                 for parent in var.parents:
@@ -167,17 +154,12 @@ class SCBM(object):
             else: # Leaf nodes
                 value = var.mechanism(noise)
 
-            # EXPERIMENTAL
             scaler = StandardScaler()
             value = scaler.fit_transform(value)
 
             var.value = value
 
             values.append(value)
-
-        # EXPERIMENTAL
-        # scaler = StandardScaler()
-        # values = [scaler.fit_transform(val) for val in values]
 
         return values, self.bottleneck_samples.copy()
 

@@ -1,14 +1,3 @@
-"""
-Idea:
- - Identifiability experiment, but with misspecified bottleneck dimension
- - Ideally: see that the correct bottleneck dimension is a lower bound. Lower and we get worst results, higher and we are still fine
- - Nonlinear case: possibly our reconstruction loss starts to decrease even in training -> unsupervised check!
- - Plot metric vs assumed bottleneck dimension: want to see something like an elbow at the true bottleneck dimension
- - How does the metric change when one thing has different size? Does the r2 still work?
-
- First try: linear, two nodes, d_x = 10, d_z = 2 or 3
-"""
-
 import os
 import sys
 
@@ -37,32 +26,11 @@ flags.DEFINE_float('p', 0.7, 'Connection probability of SCBM.')
 flags.DEFINE_enum('metric', 'r2', ['r2', 'mse'], 'Evaluation metric.')
 flags.DEFINE_string('estimation_mode', 'linear', 'Estimation mode.')
 flags.DEFINE_string('results_root',
-                    '/Users/Simon/Documents/PhD/Projects/CausalBottleneckModels/results',
+                    '',
                     'Root path to results directory.')
 
 def single_misspecification_run(scbm, scbm_samples, scbm_bn_samples, assumed_d_bn,
                                 mode='linear', p=0.7, metric='r2'):
-    # I think the main difference to exisiting stuff: adapt estimation to explicitly take assumed_d_bn as input
-    
-    # match mode:
-    #     case a if a in ('linear', 'reduced_rank'):
-    #         bn_mech_mode = 'linear'
-    #     case 'mlp':
-    #         bn_mech_mode = 'nonlinear'
-
-    # sampler = SCBMSampler(seed=seed,
-    #                       d_macro=d_macro,
-    #                       d_micro=d_micro,
-    #                       d_bottleneck=true_d_bn,
-    #                       bottleneck_mode=bn_mech_mode,
-    #                       mech_mode=bn_mech_mode,
-    #                       p=p)
-    # # Sample SCBM
-    # SCBM = sampler.sample()
-
-    # # Sample from SCBM
-    # samples, bn_samples = SCBM.sample(size=n_samples)
-
     # Estimate bottleneck functions
     estimated_bn_fcts, _ = estimate_bottleneck_and_mechanism_fcts(SCBM=scbm,
                                                                   samples=scbm_samples,
@@ -82,7 +50,6 @@ def single_misspecification_run(scbm, scbm_samples, scbm_bn_samples, assumed_d_b
         case a if a in ('linear', 'reduced_rank'):
             eval_matrix = linear_bottleneck_eval(estimated_bn_samples,
                                                  scbm_bn_samples,
-                                                #  scbm.bottleneck_samples,
                                                  )
         case 'mlp':
             eval_matrix = nonlinear_bottleneck_eval(estimated_bn_samples,
@@ -116,8 +83,8 @@ def main(argv):
         wandb_mode = 'online'
 
     wandb.init(
-        entity='bings',
-        project='bottlenecks',
+        entity='wandbusername',
+        project='wandbproject',
         mode=wandb_mode,
         config=wandb_config
     )
@@ -193,7 +160,5 @@ def main(argv):
     plot_multiple_misspecifcation_runs(results=results, x_name='assumed_d_bn', y_name=FLAGS.metric,
                                        true_d_bn=FLAGS.true_d_bn, save=True, save_path=results_path)
     
-    a=0
-
 if __name__ == '__main__':
     app.run(main)
