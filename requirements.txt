@@ -1,0 +1,29 @@
+numpy
+scipy
+pandas
+
+# ML
+scikit-learn
+torch
+
+# JAX
+jax>=0.4.26
+jaxlib>=0.4.26
+flax>=0.8.4
+optax>=0.2.2
+chex
+equinox
+orbax-checkpoint
+
+# Viz
+matplotlib
+seaborn
+
+# Utils
+absl-py
+tqdm
+networkx
+pyyaml
+
+# Experiment tracking
+wandb
