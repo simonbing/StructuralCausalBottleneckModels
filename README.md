@@ -1,6 +1,22 @@
 # Structural Causal Bottleneck Models
 
-Official code repository for the paper "Structural Causal Bottleneck Models"
+[![Paper (SCBMs)](https://img.shields.io/static/v1.svg?logo=arxiv&label=Paper&message=SCBMs&color=green)](https://arxiv.org/abs/2603.08682)
+
+
+Official code repository for the [paper](https://arxiv.org/abs/2603.08682) **Structural Causal Bottleneck Models** (2026) by
+Simon Bing*, Jonas Wahl* and Jakob Runge.
+
+If you use our code or datasets in your work, please consider citing:
+
+```bibtex
+@article{bingwahl2026scbm,
+  title     = {Structural Causal Bottleneck Models},
+  author    = {Bing*, Simon and Wahl*, Jonas and Runge, Jakob},
+  year      = {2026},
+  journal   = {arXiv preprint arXiv:2603.08682},
+  note      = {*equal contribution}
+}
+```
 
 ### Getting Started
 We implement our bottleneck estimation pipeline using the JAX ML library. To start, install all required dependecies by running
